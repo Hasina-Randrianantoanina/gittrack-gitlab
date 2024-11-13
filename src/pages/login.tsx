@@ -37,7 +37,7 @@ const LoginPage = () => {
         setError("Invalid token or GitLab instance URL."); // Gérer les erreurs
       }
     } else {
-      setError("Please enter both the GitLab URL and Access Token."); // Message d'erreur si les champs sont vides
+      setError("Veuillez saisir l’URL GitLab et votre token d’accès."); // Message d'erreur si les champs sont vides
     }
   };
 
@@ -45,24 +45,24 @@ const LoginPage = () => {
     <Container
       style={{ padding: "20px", maxWidth: "400px", marginTop: "50px" }}
     >
-      <h1 className="text-center">Login to GitTrack</h1>
+      <h1 className="text-center">Se connecter à GitTrack</h1>
       <Form>
         <FormGroup>
-          <Label for="gitlabUrl">GitLab Instance URL</Label>
+          <Label for="gitlabUrl">URL de votre instance GitLab</Label>
           <Input
             type="text"
             id="gitlabUrl"
-            placeholder="Enter your GitLab Instance URL"
+            placeholder="Entrer l'URL de votre instance GitLab"
             value={gitlabUrl}
             onChange={(e) => setGitlabUrl(e.target.value)} // Mettre à jour l'état de l'URL
           />
         </FormGroup>
         <FormGroup>
-          <Label for="token">Access Token</Label>
+          <Label for="token">Token d&apos;accès</Label>
           <Input
             type="text"
             id="token"
-            placeholder="Enter your GitLab Access Token"
+            placeholder="Entrer votre Token d'accès Gitlab"
             value={token}
             onChange={(e) => setToken(e.target.value)}
           />

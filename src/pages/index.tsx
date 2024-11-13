@@ -3,10 +3,13 @@
 
 import { useEffect, useState } from "react";
 import { getProjects, Project } from "../lib/gitlab"; // Assurez-vous que ce chemin est correct
+import { useRouter } from "next/router"; // Importer useRouter
+import { Button } from "reactstrap"; // Importer Button de Reactstrap
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter(); // Initialiser le router
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -23,11 +26,24 @@ export default function Home() {
     fetchProjects();
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("gitlab_token"); // Supprimer le token
+    localStorage.removeItem("gitlab_url"); // Supprimer l'URL de l'instance
+    router.push("/login"); // Rediriger vers la page de connexion
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
     <div>
       <h1>My GitLab Projects</h1>
+      <Button
+        color="info"
+        onClick={handleLogout}
+        style={{ marginBottom: "20px" }}
+      >
+        Se déconnecter
+      </Button>
       {projects.length === 0 ? (
         <p>No projects found.</p>
       ) : (
