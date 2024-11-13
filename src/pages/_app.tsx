@@ -1,4 +1,4 @@
-// src/app/_app.tsx
+// src/pages/_app.tsx
 import "bootstrap/dist/css/bootstrap.min.css"; // Importer Bootstrap
 import { AppProps } from "next/app"; // Importer AppProps de Next.js
 import { useEffect } from "react";
