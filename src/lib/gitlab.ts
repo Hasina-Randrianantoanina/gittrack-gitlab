@@ -53,8 +53,71 @@ export interface Project {
 
 export interface Issue {
   id: number;
+  iid: number;
+  project_id: number;
   title: string;
-  // Ajoutez d'autres propriétés selon vos besoins
+  description: string;
+  state: string;
+  created_at: string;
+  updated_at: string;
+  closed_at: string | null;
+  labels: string[];
+  milestone: {
+    id: number;
+    iid: number;
+    project_id: number;
+    title: string;
+    description: string;
+    state: string;
+    created_at: string;
+    updated_at: string;
+    due_date: string;
+    start_date: string;
+  } | null;
+  assignees: {
+    id: number;
+    name: string;
+    username: string;
+    state: string;
+    avatar_url: string;
+    web_url: string;
+  }[];
+  author: {
+    id: number;
+    name: string;
+    username: string;
+    state: string;
+    avatar_url: string;
+    web_url: string;
+  };
+  assignee: {
+    id: number;
+    name: string;
+    username: string;
+    state: string;
+    avatar_url: string;
+    web_url: string;
+  } | null;
+  user_notes_count: number;
+  merge_requests_count: number;
+  upvotes: number;
+  downvotes: number;
+  due_date: string | null;
+  confidential: boolean;
+  discussion_locked: boolean | null;
+  web_url: string;
+  time_stats: {
+    time_estimate: number;
+    total_time_spent: number;
+    human_time_estimate: string | null;
+    human_total_time_spent: string | null;
+  };
+  task_completion_status: {
+    count: number;
+    completed_count: number;
+  };
+  weight: number | null;
+  has_tasks: boolean;
 }
 
 export const getProjects = async (): Promise<Project[]> => {

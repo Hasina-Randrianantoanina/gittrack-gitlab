@@ -68,7 +68,7 @@ const LoginPage = () => {
           />
         </FormGroup>
         <Button color="primary" onClick={handleLogin} block>
-          Login
+          Se connecter
         </Button>
         {error && (
           <Alert color="danger" className="mt-3">
