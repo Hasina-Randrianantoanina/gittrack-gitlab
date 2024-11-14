@@ -7,7 +7,45 @@ import { useRouter } from "next/router";
 import { Button, Container, Row, Col } from "reactstrap";
 import { Gantt, Task, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
-import { parseISO, addDays, isAfter } from "date-fns";
+import { parseISO, addDays, isAfter, format } from "date-fns";
+
+// Composant pour personnaliser le contenu des tooltips
+const CustomTooltipContent = ({
+  task,
+  fontSize,
+  fontFamily,
+}: {
+  task: Task;
+  fontSize: string;
+  fontFamily: string;
+}) => {
+  return (
+    <div
+      style={{
+        fontSize,
+        fontFamily,
+        padding: "10px",
+        background: "white",
+        border: "1px solid #ccc",
+        borderRadius: "5px",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+      }}
+    >
+      <div>
+        <strong>Tâche:</strong> {task.name}
+      </div>
+      <div>
+        <strong>Début:</strong> {format(task.start, "dd/MM/yyyy")}
+      </div>
+      <div>
+        <strong>Fin:</strong> {format(task.end, "dd/MM/yyyy")}
+      </div>
+      <div>
+        <strong>Progrès:</strong> {task.progress}%
+      </div>
+    </div>
+  );
+};
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -79,7 +117,7 @@ export default function Home() {
       return [
         {
           id: "default",
-          name: "No issues found",
+          name: "Aucune tâche trouvée",
           start: new Date(),
           end: addDays(new Date(), 1),
           progress: 0,
@@ -127,13 +165,13 @@ export default function Home() {
     });
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) return <div className="loading">Chargement...</div>;
 
   return (
     <Container fluid className="vh-100 d-flex flex-column p-3">
       <Row className="mb-3">
         <Col>
-          <h1>GitLab Projects</h1>
+          <h1>Projets GitLab</h1>
         </Col>
         <Col xs="auto">
           <Button color="info" onClick={handleLogout}>
@@ -162,10 +200,13 @@ export default function Home() {
           </select>
         </Col>
       </Row>
+
       {selectedProject && !issuesLoading && (
         <Row className="flex-grow-1">
           <Col>
-            <h2 className="h3 mb-3">Gantt Chart for {selectedProject.name}</h2>
+            <h2 className="h3 mb-3">
+              Diagramme de Gantt pour {selectedProject.name}
+            </h2>
             <div className="gantt-container">
               <Gantt
                 tasks={prepareGanttData()}
@@ -197,12 +238,16 @@ export default function Home() {
                 todayColor="rgba(252, 248, 227, 0.5)"
                 projectProgressColor="#ff9e0d"
                 rtl={false}
+                TooltipContent={CustomTooltipContent} // Utilisation du contenu personnalisé pour le tooltip
               />
             </div>
           </Col>
         </Row>
       )}
-      {issuesLoading && <div className="loading">Loading issues...</div>}
+
+      {issuesLoading && (
+        <div className="loading">Chargement des problèmes...</div>
+      )}
     </Container>
   );
 }
