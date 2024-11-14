@@ -15,6 +15,10 @@ export default function Home() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [issuesLoading, setIssuesLoading] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -34,7 +38,17 @@ export default function Home() {
     };
 
     fetchProjects();
+    updateWindowDimensions();
+    window.addEventListener("resize", updateWindowDimensions);
+    return () => window.removeEventListener("resize", updateWindowDimensions);
   }, []);
+
+  const updateWindowDimensions = () => {
+    setWindowDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+  };
 
   const fetchIssues = async (projectId: number) => {
     setIssuesLoading(true);
@@ -118,7 +132,12 @@ export default function Home() {
   return (
     <Container
       fluid
-      style={{ height: "100vh", display: "flex", flexDirection: "column" }}
+      style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        padding: "20px",
+      }}
     >
       <Row className="mb-3">
         <Col>
@@ -151,10 +170,16 @@ export default function Home() {
         </Col>
       </Row>
       {selectedProject && !issuesLoading && (
-        <Row style={{ flexGrow: 1 }}>
+        <Row style={{ flexGrow: 1, marginTop: "20px" }}>
           <Col>
             <h2>Gantt Chart for {selectedProject.name}</h2>
-            <div style={{ overflowX: "auto", width: "100%" }}>
+            <div
+              style={{
+                overflowX: "auto",
+                width: "100%",
+                height: "calc(100vh - 200px)",
+              }}
+            >
               <Gantt
                 tasks={prepareGanttData()}
                 viewMode={ViewMode.Month}
@@ -165,18 +190,18 @@ export default function Home() {
                   console.log(task, children);
                 }}
                 onSelect={(task: Task) => console.log(task)}
-                ganttHeight={1000} // Set the height of the Gantt chart
-                columnWidth={350} // Increase column width
-                listCellWidth="500px" // Set the width of the task list
-                rowHeight={50} // Increase row height
-                barFill={80} // Percentage of the bar height
-                barProgressColor="#007bff" // Color for the progress part of the bar
-                barBackgroundColor="#E0E0E0" // Background color for the non-progress part of the bar
-                handleWidth={10} // Width of the progress handle
-                todayColor="rgba(252, 248, 227, 0.5)" // Highlight color for today's date
-                projectProgressColor="#ff9e0d" // Color for project progress
-                progressBarCornerRadius={4} // Rounded corners for progress bars
-                rtl={false} // Set to true for right-to-left languages
+                ganttHeight={windowDimensions.height * 0.7}
+                columnWidth={Math.max(250, windowDimensions.width * 0.1)}
+                listCellWidth={Math.max(300, windowDimensions.width * 0.2)}
+                rowHeight={50}
+                barFill={80}
+                barProgressColor="#007bff"
+                barBackgroundColor="#E0E0E0"
+                handleWidth={10}
+                todayColor="rgba(252, 248, 227, 0.5)"
+                projectProgressColor="#ff9e0d"
+                progressBarCornerRadius={4}
+                rtl={false}
               />
             </div>
           </Col>
