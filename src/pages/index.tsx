@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 import { Button, Container, Row, Col } from "reactstrap";
 import { Gantt, Task, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
-import { parseISO, addDays } from "date-fns";
+import { parseISO, addDays, isAfter } from "date-fns";
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -71,6 +71,7 @@ export default function Home() {
           progress: 0,
           type: "task",
           project: selectedProject?.name || "",
+          styles: { backgroundColor: "#E0E0E0" },
         },
       ];
     }
@@ -81,7 +82,12 @@ export default function Home() {
         : new Date();
       const endDate = issue.due_date
         ? parseISO(issue.due_date)
-        : addDays(startDate, 7); // 7 days later if no due date
+        : addDays(startDate, 7);
+
+      const isOverdue =
+        isAfter(new Date(), endDate) && issue.state !== "closed";
+      const isNotStarted =
+        issue.state === "opened" && issue.time_stats.total_time_spent === 0;
 
       return {
         id: issue.iid.toString(),
@@ -91,6 +97,18 @@ export default function Home() {
         progress: 0,
         type: "task",
         project: selectedProject?.name || "",
+        styles: {
+          backgroundColor: isOverdue
+            ? "#FFCCCB"
+            : isNotStarted
+            ? "#90EE90"
+            : "#007bff",
+          backgroundSelectedColor: isOverdue
+            ? "#FF6961"
+            : isNotStarted
+            ? "#32CD32"
+            : "#0056b3",
+        },
       };
     });
   };
@@ -98,7 +116,10 @@ export default function Home() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <Container fluid>
+    <Container
+      fluid
+      style={{ height: "100vh", display: "flex", flexDirection: "column" }}
+    >
       <Row className="mb-3">
         <Col>
           <h1>GitLab Projects</h1>
@@ -130,20 +151,34 @@ export default function Home() {
         </Col>
       </Row>
       {selectedProject && !issuesLoading && (
-        <Row>
+        <Row style={{ flexGrow: 1 }}>
           <Col>
             <h2>Gantt Chart for {selectedProject.name}</h2>
-            <Gantt
-              tasks={prepareGanttData()}
-              viewMode={ViewMode.Month}
-              onDateChange={(task: Task, children: Task[]) => {
-                console.log(task, children);
-              }}
-              onProgressChange={(task: Task, children: Task[]) => {
-                console.log(task, children);
-              }}
-              onSelect={(task: Task) => console.log(task)}
-            />
+            <div style={{ overflowX: "auto", width: "100%" }}>
+              <Gantt
+                tasks={prepareGanttData()}
+                viewMode={ViewMode.Month}
+                onDateChange={(task: Task, children: Task[]) => {
+                  console.log(task, children);
+                }}
+                onProgressChange={(task: Task, children: Task[]) => {
+                  console.log(task, children);
+                }}
+                onSelect={(task: Task) => console.log(task)}
+                ganttHeight={1000} // Set the height of the Gantt chart
+                columnWidth={350} // Increase column width
+                listCellWidth="500px" // Set the width of the task list
+                rowHeight={50} // Increase row height
+                barFill={80} // Percentage of the bar height
+                barProgressColor="#007bff" // Color for the progress part of the bar
+                barBackgroundColor="#E0E0E0" // Background color for the non-progress part of the bar
+                handleWidth={10} // Width of the progress handle
+                todayColor="rgba(252, 248, 227, 0.5)" // Highlight color for today's date
+                projectProgressColor="#ff9e0d" // Color for project progress
+                progressBarCornerRadius={4} // Rounded corners for progress bars
+                rtl={false} // Set to true for right-to-left languages
+              />
+            </div>
           </Col>
         </Row>
       )}
