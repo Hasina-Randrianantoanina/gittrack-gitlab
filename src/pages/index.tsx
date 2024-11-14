@@ -8,8 +8,14 @@ import { Button, Container, Row, Col } from "reactstrap";
 import { Gantt, Task, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
 import { parseISO, addDays, isAfter, format } from "date-fns";
+import { fr } from "date-fns/locale";
 
-// Composant pour personnaliser le contenu des tooltips
+const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
+
+// Set locale to a valid BCP 47 language tag
+const ganttLocale = "fr"; // Use a valid language tag
+
+// Custom tooltip component
 const CustomTooltipContent = ({
   task,
   fontSize,
@@ -35,10 +41,10 @@ const CustomTooltipContent = ({
         <strong>Tâche:</strong> {task.name}
       </div>
       <div>
-        <strong>Début:</strong> {format(task.start, "dd/MM/yyyy")}
+        <strong>Début:</strong> {formatDate(task.start)}
       </div>
       <div>
-        <strong>Fin:</strong> {format(task.end, "dd/MM/yyyy")}
+        <strong>Fin:</strong> {formatDate(task.end)}
       </div>
       <div>
         <strong>Progrès:</strong> {task.progress}%
@@ -235,10 +241,12 @@ export default function Home() {
                 barProgressColor="#007bff"
                 barBackgroundColor="#E0E0E0"
                 handleWidth={8}
-                todayColor="rgba(252, 248, 227, 0.5)"
+                todayColor="rgba(252,248,227,0.5)"
                 projectProgressColor="#ff9e0d"
                 rtl={false}
-                TooltipContent={CustomTooltipContent} // Utilisation du contenu personnalisé pour le tooltip
+                TooltipContent={CustomTooltipContent}
+                // Ensure locale is passed correctly as a string for French headers.
+                locale={ganttLocale}
               />
             </div>
           </Col>
