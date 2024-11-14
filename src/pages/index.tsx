@@ -171,7 +171,7 @@ export default function Home() {
     <Container fluid className="vh-100 d-flex flex-column p-3">
       <Row className="mb-3">
         <Col>
-          <h1>Projets GitLab</h1>
+          <h1>Filtres par projet</h1>
         </Col>
         <Col xs="auto">
           <Button color="info" onClick={handleLogout}>
