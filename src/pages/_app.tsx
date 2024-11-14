@@ -3,6 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css"; // Importer Bootstrap
 import { AppProps } from "next/app"; // Importer AppProps de Next.js
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+import "../globals.css";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();

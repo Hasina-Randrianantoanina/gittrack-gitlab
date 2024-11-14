@@ -16,8 +16,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [issuesLoading, setIssuesLoading] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState({
-    width: 0,
-    height: 0,
+    width: typeof window !== "undefined" ? window.innerWidth : 0,
+    height: typeof window !== "undefined" ? window.innerHeight : 0,
   });
   const router = useRouter();
 
@@ -127,18 +127,10 @@ export default function Home() {
     });
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="loading">Loading...</div>;
 
   return (
-    <Container
-      fluid
-      style={{
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        padding: "20px",
-      }}
-    >
+    <Container fluid className="vh-100 d-flex flex-column p-3">
       <Row className="mb-3">
         <Col>
           <h1>GitLab Projects</h1>
@@ -149,6 +141,7 @@ export default function Home() {
           </Button>
         </Col>
       </Row>
+
       <Row className="mb-3">
         <Col>
           <select
@@ -170,19 +163,15 @@ export default function Home() {
         </Col>
       </Row>
       {selectedProject && !issuesLoading && (
-        <Row style={{ flexGrow: 1, marginTop: "20px" }}>
+        <Row className="flex-grow-1">
           <Col>
-            <h2>Gantt Chart for {selectedProject.name}</h2>
-            <div
-              style={{
-                overflowX: "auto",
-                width: "100%",
-                height: "calc(100vh - 200px)",
-              }}
-            >
+            <h2 className="h3 mb-3">Gantt Chart for {selectedProject.name}</h2>
+            <div className="gantt-container">
               <Gantt
                 tasks={prepareGanttData()}
-                viewMode={ViewMode.Month}
+                viewMode={
+                  windowDimensions.width < 768 ? ViewMode.Day : ViewMode.Month
+                }
                 onDateChange={(task: Task, children: Task[]) => {
                   console.log(task, children);
                 }}
@@ -190,24 +179,30 @@ export default function Home() {
                   console.log(task, children);
                 }}
                 onSelect={(task: Task) => console.log(task)}
-                ganttHeight={windowDimensions.height * 0.7}
-                columnWidth={Math.max(250, windowDimensions.width * 0.1)}
-                listCellWidth={Math.max(300, windowDimensions.width * 0.2)}
-                rowHeight={50}
+                ganttHeight={windowDimensions.height * 0.6}
+                columnWidth={
+                  windowDimensions.width < 768
+                    ? 50
+                    : Math.max(200, windowDimensions.width * 0.08)
+                }
+                listCellWidth={`${Math.max(
+                  200,
+                  windowDimensions.width * 0.2
+                )}px`}
+                rowHeight={40}
                 barFill={80}
                 barProgressColor="#007bff"
                 barBackgroundColor="#E0E0E0"
-                handleWidth={10}
+                handleWidth={8}
                 todayColor="rgba(252, 248, 227, 0.5)"
                 projectProgressColor="#ff9e0d"
-                progressBarCornerRadius={4}
                 rtl={false}
               />
             </div>
           </Col>
         </Row>
       )}
-      {issuesLoading && <div>Loading issues...</div>}
+      {issuesLoading && <div className="loading">Loading issues...</div>}
     </Container>
   );
 }
