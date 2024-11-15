@@ -120,6 +120,14 @@ export interface Issue {
   has_tasks: boolean;
 }
 
+
+export interface ProjectMember {
+  id: number;
+  name: string;
+  username: string;
+  avatar_url: string;
+}
+
 export const getProjects = async (): Promise<Project[]> => {
   try {
     console.log("Fetching projects from:", `${gitlabApiUrl}/projects`);
@@ -141,5 +149,30 @@ export const getProjectIssues = async (projectId: number): Promise<Issue[]> => {
   } catch (error) {
     console.error(`Error fetching issues for project ID ${projectId}:`, error);
     throw error; // Re-throw the error after logging
+  }
+};
+
+// récupérer les membres du projet
+export const getProjectMembers = async (projectId: number): Promise<ProjectMember[]> => {
+  try {
+    console.log(`Fetching members for project ID ${projectId} from: ${gitlabApiUrl}/projects/${projectId}/members`);
+    const response = await gitlabApi.get(`/projects/${projectId}/members`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching members for project ID ${projectId}:`, error);
+    throw error;
+  }
+};
+
+// assigner un membre à une issue
+export const assignMemberToIssue = async (projectId: number, issueIid: number, userId: number): Promise<void> => {
+  try {
+    console.log(`Assigning user ${userId} to issue ${issueIid} in project ${projectId}`);
+    await gitlabApi.put(`/projects/${projectId}/issues/${issueIid}`, {
+      assignee_ids: [userId]
+    });
+  } catch (error) {
+    console.error(`Error assigning user ${userId} to issue ${issueIid} in project ${projectId}:`, error);
+    throw error;
   }
 };

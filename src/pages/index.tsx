@@ -2,7 +2,15 @@
 "use client";
 
 import React, { useEffect, useState, FC } from "react";
-import { getProjects, Project, getProjectIssues, Issue } from "../lib/gitlab";
+import {
+  getProjects,
+  Project,
+  getProjectIssues,
+  Issue,
+  getProjectMembers,
+  ProjectMember,
+  assignMemberToIssue,
+} from "../lib/gitlab";
 import { useRouter } from "next/router";
 import { Button, ButtonGroup, FormGroup, Label, Input , Container, Row, Col } from "reactstrap";
 import { Gantt, Task, ViewMode } from "gantt-task-react";
@@ -22,9 +30,11 @@ const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 const ganttLocale = "fr";
 
 interface CustomTooltipProps {
-  task: Task;
+  task: Task & { assignees?: string };
   fontSize: string;
   fontFamily: string;
+  onAssign: (taskId: string, userId: number) => void;
+  projectMembers: ProjectMember[];
 }
 
 const CustomTooltipContent: FC<CustomTooltipProps> = ({
@@ -56,9 +66,13 @@ const CustomTooltipContent: FC<CustomTooltipProps> = ({
       <div>
         <strong>Progrès:</strong> {task.progress}%
       </div>
+      <div>
+        <strong>Assignés:</strong> {task.assignees || "Aucun"}
+      </div>
     </div>
   );
 };
+
 
 interface HeaderProps {
   headerHeight: number;
@@ -147,6 +161,7 @@ export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [issuesLoading, setIssuesLoading] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState({
@@ -186,18 +201,26 @@ export default function Home() {
     });
   };
 
-  const fetchIssues = async (projectId: number) => {
-    setIssuesLoading(true);
-    try {
-      const issuesData = await getProjectIssues(projectId);
-      setIssues(issuesData);
-    } catch (error) {
-      console.error("Échec de la récupération des problèmes:", error);
-      setIssues([]);
-    } finally {
-      setIssuesLoading(false);
-    }
-  };
+ const fetchIssues = async (projectId: number) => {
+   setIssuesLoading(true);
+   try {
+     const [issuesData, membersData] = await Promise.all([
+       getProjectIssues(projectId),
+       getProjectMembers(projectId),
+     ]);
+     setIssues(issuesData);
+     setProjectMembers(membersData);
+   } catch (error) {
+     console.error(
+       "Échec de la récupération des problèmes ou des membres:",
+       error
+     );
+     setIssues([]);
+     setProjectMembers([]);
+   } finally {
+     setIssuesLoading(false);
+   }
+ };
 
   const handleLogout = () => {
     localStorage.removeItem("gitlab_token");
@@ -210,7 +233,17 @@ export default function Home() {
     fetchIssues(project.id);
   };
 
-  const prepareGanttData = (): Task[] => {
+  const handleAssignMember = async (issueIid: string, userId: number) => {
+    if (!selectedProject) return;
+    try {
+      await assignMemberToIssue(selectedProject.id, parseInt(issueIid), userId);
+      fetchIssues(selectedProject.id);
+    } catch (error) {
+      console.error("Erreur lors de l'assignation du membre:", error);
+    }
+  };
+
+  const prepareGanttData = (): (Task & { assignees?: string })[] => {
     const today = new Date();
     const monthStart = startOfMonth(today);
     const monthEnd = endOfMonth(today);
@@ -237,7 +270,6 @@ export default function Home() {
       const endDate = issue.due_date
         ? parseISO(issue.due_date)
         : addDays(startDate, 7);
-
       const isOverdue = isAfter(today, endDate) && issue.state !== "closed";
       const isNotStarted =
         issue.state === "opened" && issue.time_stats.total_time_spent === 0;
@@ -250,6 +282,7 @@ export default function Home() {
         progress: 0,
         type: "task",
         project: selectedProject?.name || "",
+        assignees: issue.assignees.map((a) => a.name).join(", "),
         styles: {
           backgroundColor: isOverdue
             ? "#FFCCCB"
@@ -322,6 +355,22 @@ export default function Home() {
     );
   };
 
+  const MembersList = () => {
+    const uniqueMembers = Array.from(
+      new Set(issues.flatMap((issue) => issue.assignees.map((a) => a.name)))
+    );
+    return (
+      <div>
+        <h3>Membres du projet</h3>
+        <ul>
+          {uniqueMembers.map((memberName, index) => (
+            <li key={index}>{memberName}</li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
   return (
     <Container fluid className="vh-100 d-flex flex-column p-3">
       <Row className="mb-3">
@@ -358,7 +407,10 @@ export default function Home() {
 
       {selectedProject && !issuesLoading && (
         <Row className="flex-grow-1">
-          <Col>
+          <Col md={3}>
+            <MembersList />
+          </Col>
+          <Col md={9}>
             <h2 className="h3 mb-3">
               Diagramme de Gantt pour {selectedProject.name}
             </h2>
@@ -408,7 +460,7 @@ export default function Home() {
                 listCellWidth={isChecked ? "155px" : ""}
                 columnWidth={columnWidth}
                 ganttHeight={windowDimensions.height * 0.6}
-                headerHeight={60} // Augmenté pour donner plus d'espace à l'en-tête
+                headerHeight={60}
                 rowHeight={40}
                 barFill={80}
                 barProgressColor="#007bff"
@@ -417,7 +469,13 @@ export default function Home() {
                 todayColor="rgba(252,248,227,0.5)"
                 projectProgressColor="#ff9e0d"
                 rtl={false}
-                TooltipContent={CustomTooltipContent}
+                TooltipContent={(props) => (
+                  <CustomTooltipContent
+                    {...props}
+                    onAssign={handleAssignMember}
+                    projectMembers={projectMembers}
+                  />
+                )}
                 HeaderContent={CustomHeader}
                 locale={ganttLocale}
                 timeStep={86400000}
