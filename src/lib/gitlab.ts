@@ -49,6 +49,12 @@ export interface Project {
     avatar_url?: string | null;
     web_url: string;
   };
+  creator_id: number;
+  creator: {
+    id: number;
+    name: string;
+    username: string;
+  };
 }
 
 export interface Issue {
@@ -125,7 +131,7 @@ export interface ProjectMember {
   id: number;
   name: string;
   username: string;
-  avatar_url: string;
+  access_level: number;
 }
 
 export const getProjects = async (): Promise<Project[]> => {
@@ -153,10 +159,14 @@ export const getProjectIssues = async (projectId: number): Promise<Issue[]> => {
 };
 
 // récupérer les membres du projet
-export const getProjectMembers = async (projectId: number): Promise<ProjectMember[]> => {
+export const getProjectMembers = async (
+  projectId: number
+): Promise<ProjectMember[]> => {
   try {
-    console.log(`Fetching members for project ID ${projectId} from: ${gitlabApiUrl}/projects/${projectId}/members`);
-    const response = await gitlabApi.get(`/projects/${projectId}/members`);
+    console.log(
+      `Fetching members for project ID ${projectId} from: ${gitlabApiUrl}/projects/${projectId}/members/all`
+    );
+    const response = await gitlabApi.get(`/projects/${projectId}/members/all`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching members for project ID ${projectId}:`, error);

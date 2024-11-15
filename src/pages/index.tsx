@@ -67,7 +67,7 @@ const CustomTooltipContent: FC<CustomTooltipProps> = ({
         <strong>Progrès:</strong> {task.progress}%
       </div>
       <div>
-        <strong>Assignés:</strong> {task.assignees || "Aucun"}
+        <strong>Assignée à:</strong> {task.assignees || "Aucun"}
       </div>
     </div>
   );
@@ -201,26 +201,46 @@ export default function Home() {
     });
   };
 
- const fetchIssues = async (projectId: number) => {
-   setIssuesLoading(true);
-   try {
-     const [issuesData, membersData] = await Promise.all([
-       getProjectIssues(projectId),
-       getProjectMembers(projectId),
-     ]);
-     setIssues(issuesData);
-     setProjectMembers(membersData);
-   } catch (error) {
-     console.error(
-       "Échec de la récupération des problèmes ou des membres:",
-       error
-     );
-     setIssues([]);
-     setProjectMembers([]);
-   } finally {
-     setIssuesLoading(false);
-   }
- };
+  const fetchIssues = async (projectId: number) => {
+    setIssuesLoading(true);
+    try {
+      const [issuesData, membersData] = await Promise.all([
+        getProjectIssues(projectId),
+        getProjectMembers(projectId),
+      ]);
+      setIssues(issuesData);
+      setProjectMembers(membersData);
+    } catch (error) {
+      console.error(
+        "Échec de la récupération des problèmes ou des membres:",
+        error
+      );
+      setIssues([]);
+      setProjectMembers([]);
+    } finally {
+      setIssuesLoading(false);
+    }
+  };
+
+  // fonction pour convertir le niveau d'accès en rôle
+  const getRole = (accessLevel: number): string => {
+    switch (accessLevel) {
+      case 10:
+        return "Guest";
+      case 20:
+        return "Reporter";
+      case 30:
+        return "Developer";
+      case 40:
+        return "Maintainer";
+      case 50:
+        return "Owner";
+      case 5:
+        return "Minimal Access";
+      default:
+        return "Unknown";
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("gitlab_token");
@@ -355,21 +375,19 @@ export default function Home() {
     );
   };
 
-  const MembersList = () => {
-    const uniqueMembers = Array.from(
-      new Set(issues.flatMap((issue) => issue.assignees.map((a) => a.name)))
-    );
-    return (
-      <div>
-        <h3>Membres du projet</h3>
-        <ul>
-          {uniqueMembers.map((memberName, index) => (
-            <li key={index}>{memberName}</li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
+  const MembersList = () => (
+    <div>
+      <h3>Membres du projet</h3>
+      <ul>
+        {projectMembers.map((member) => (
+          <li key={member.id}>
+            {member.name} - {getRole(member.access_level)}
+            {selectedProject?.creator_id === member.id && " (Créateur)"}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 
   return (
     <Container fluid className="vh-100 d-flex flex-column py-4 px-5">
