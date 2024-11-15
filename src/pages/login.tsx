@@ -45,7 +45,7 @@ const LoginPage = () => {
     <Container
       style={{ padding: "20px", maxWidth: "400px", marginTop: "50px" }}
     >
-      <h1 className="text-center">Se connecter à GitTrack</h1>
+      <h1 className="text-center">GitTrack</h1>
       <Form>
         <FormGroup>
           <Label for="gitlabUrl">URL de votre instance GitLab</Label>

@@ -1,29 +1,36 @@
 // src/pages/index.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, FC } from "react";
 import { getProjects, Project, getProjectIssues, Issue } from "../lib/gitlab";
 import { useRouter } from "next/router";
 import { Button, Container, Row, Col } from "reactstrap";
 import { Gantt, Task, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
-import { parseISO, addDays, isAfter, format } from "date-fns";
+import {
+  parseISO,
+  addDays,
+  isAfter,
+  format,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
 import { fr } from "date-fns/locale";
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 
-// Set locale to a valid BCP 47 language tag
-const ganttLocale = "fr"; // Use a valid language tag
+const ganttLocale = "fr";
 
-// Custom tooltip component
-const CustomTooltipContent = ({
-  task,
-  fontSize,
-  fontFamily,
-}: {
+interface CustomTooltipProps {
   task: Task;
   fontSize: string;
   fontFamily: string;
+}
+
+const CustomTooltipContent: FC<CustomTooltipProps> = ({
+  task,
+  fontSize,
+  fontFamily,
 }) => {
   return (
     <div
@@ -53,6 +60,65 @@ const CustomTooltipContent = ({
   );
 };
 
+interface HeaderProps {
+  headerHeight: number;
+  headerWidth: number;
+  scrollY: number;
+}
+
+const CustomHeader: FC<HeaderProps> = ({
+  headerHeight,
+  headerWidth,
+  scrollY,
+}) => {
+  const style = {
+    height: headerHeight,
+    width: headerWidth,
+    display: "flex",
+    flexDirection: "column" as "column",
+    alignItems: "center",
+    justifyContent: "center",
+    transform: `translateY(${scrollY}px)`,
+  };
+
+  const date = new Date();
+  const dayName = format(date, "EEE", { locale: fr }); // Nom du jour abrégé
+  const dayNumber = format(date, "d");
+
+  return (
+    <div style={style}>
+      <div style={{ fontSize: "0.8em", marginBottom: "2px" }}>{dayName}</div>
+      <div style={{ fontWeight: "bold" }}>{dayNumber}</div>
+    </div>
+  );
+};
+
+interface ViewSwitcherProps {
+  onViewModeChange: (viewMode: ViewMode) => void;
+  onViewListChange: (isChecked: boolean) => void;
+  isChecked: boolean;
+}
+
+const ViewSwitcher: FC<ViewSwitcherProps> = ({
+  onViewModeChange,
+  onViewListChange,
+  isChecked,
+}) => {
+  return (
+    <div>
+      <button onClick={() => onViewModeChange(ViewMode.Day)}>Day</button>
+      <button onClick={() => onViewModeChange(ViewMode.Week)}>Week</button>
+      <button onClick={() => onViewModeChange(ViewMode.Month)}>Month</button>
+      <input
+        type="checkbox"
+        checked={isChecked}
+        onChange={() => onViewListChange(!isChecked)}
+      />
+      Show Task List
+    </div>
+  );
+};
+
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -63,6 +129,8 @@ export default function Home() {
     width: typeof window !== "undefined" ? window.innerWidth : 0,
     height: typeof window !== "undefined" ? window.innerHeight : 0,
   });
+  const [view, setView] = useState<ViewMode>(ViewMode.Day);
+  const [isChecked, setIsChecked] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -119,13 +187,17 @@ export default function Home() {
   };
 
   const prepareGanttData = (): Task[] => {
+    const today = new Date();
+    const monthStart = startOfMonth(today);
+    const monthEnd = endOfMonth(today);
+
     if (issues.length === 0) {
       return [
         {
           id: "default",
           name: "Aucune tâche trouvée",
-          start: new Date(),
-          end: addDays(new Date(), 1),
+          start: monthStart,
+          end: monthEnd,
           progress: 0,
           type: "task",
           project: selectedProject?.name || "",
@@ -137,13 +209,12 @@ export default function Home() {
     return issues.map((issue) => {
       const startDate = issue.created_at
         ? parseISO(issue.created_at)
-        : new Date();
+        : monthStart;
       const endDate = issue.due_date
         ? parseISO(issue.due_date)
         : addDays(startDate, 7);
 
-      const isOverdue =
-        isAfter(new Date(), endDate) && issue.state !== "closed";
+      const isOverdue = isAfter(today, endDate) && issue.state !== "closed";
       const isNotStarted =
         issue.state === "opened" && issue.time_stats.total_time_spent === 0;
 
@@ -170,6 +241,13 @@ export default function Home() {
       };
     });
   };
+
+  let columnWidth = 60; // Augmenté pour le mode jour
+  if (view === ViewMode.Month) {
+    columnWidth = 300;
+  } else if (view === ViewMode.Week) {
+    columnWidth = 250;
+  }
 
   if (loading) return <div className="loading">Chargement...</div>;
 
@@ -207,6 +285,12 @@ export default function Home() {
         </Col>
       </Row>
 
+      <ViewSwitcher
+        onViewModeChange={(viewMode: ViewMode) => setView(viewMode)}
+        onViewListChange={(isChecked: boolean) => setIsChecked(isChecked)}
+        isChecked={isChecked}
+      />
+
       {selectedProject && !issuesLoading && (
         <Row className="flex-grow-1">
           <Col>
@@ -216,26 +300,42 @@ export default function Home() {
             <div className="gantt-container">
               <Gantt
                 tasks={prepareGanttData()}
-                viewMode={
-                  windowDimensions.width < 768 ? ViewMode.Day : ViewMode.Month
-                }
-                onDateChange={(task: Task, children: Task[]) => {
-                  console.log(task, children);
+                viewMode={view}
+                onDateChange={(task: Task) => {
+                  console.log("On date change Id:" + task.id);
+                  // Ajoutez ici la logique pour mettre à jour les tâches
                 }}
-                onProgressChange={(task: Task, children: Task[]) => {
-                  console.log(task, children);
+                onDelete={(task: Task) => {
+                  const conf = window.confirm(
+                    "Are you sure about " + task.name + " ?"
+                  );
+                  if (conf) {
+                    // Ajoutez ici la logique pour supprimer la tâche
+                  }
+                  return conf;
                 }}
-                onSelect={(task: Task) => console.log(task)}
+                onProgressChange={(task: Task) => {
+                  console.log("On progress change Id:" + task.id);
+                  // Ajoutez ici la logique pour mettre à jour la progression
+                }}
+                onDoubleClick={(task: Task) => {
+                  alert("On Double Click event Id:" + task.id);
+                }}
+                onSelect={(task: Task, isSelected: boolean) => {
+                  console.log(
+                    task.name +
+                      " has " +
+                      (isSelected ? "selected" : "unselected")
+                  );
+                }}
+                onExpanderClick={(task: Task) => {
+                  console.log("On expander click Id:" + task.id);
+                  // Ajoutez ici la logique pour gérer l'expansion
+                }}
+                listCellWidth={isChecked ? "155px" : ""}
+                columnWidth={columnWidth}
                 ganttHeight={windowDimensions.height * 0.6}
-                columnWidth={
-                  windowDimensions.width < 768
-                    ? 50
-                    : Math.max(200, windowDimensions.width * 0.08)
-                }
-                listCellWidth={`${Math.max(
-                  200,
-                  windowDimensions.width * 0.2
-                )}px`}
+                headerHeight={60} // Augmenté pour donner plus d'espace à l'en-tête
                 rowHeight={40}
                 barFill={80}
                 barProgressColor="#007bff"
@@ -245,8 +345,11 @@ export default function Home() {
                 projectProgressColor="#ff9e0d"
                 rtl={false}
                 TooltipContent={CustomTooltipContent}
-                // Ensure locale is passed correctly as a string for French headers.
+                HeaderContent={CustomHeader}
                 locale={ganttLocale}
+                timeStep={86400000}
+                arrowColor="#ccc"
+                fontSize={12}
               />
             </div>
           </Col>
