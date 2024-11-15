@@ -372,115 +372,102 @@ export default function Home() {
   };
 
   return (
-    <Container fluid className="vh-100 d-flex flex-column p-3">
-      <Row className="mb-3 align-items-center">
+    <Container fluid className="vh-100 d-flex flex-column py-4 px-5">
+      <Row className="mb-4 align-items-center">
         <Col md={11}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <label style={{ minWidth: "60px", marginBottom: "0" }}>
+          <div className="d-flex align-items-center gap-3">
+            <label
+              className="fw-bold text-muted mb-0"
+              style={{ minWidth: "70px" }}
+            >
               Projets :
             </label>
-            <select
-              className="form-select"
-              style={{ width: "20%" }}
-              onChange={(e) => {
-                const project = projects.find(
-                  (p) => p.id === parseInt(e.target.value)
-                );
-                if (project) handleProjectChange(project);
-              }}
-              value={selectedProject?.id || ""}
-            >
-              {/* <option value="" disabled>
-                Sélectionner projet
-              </option> */}
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
+            {[
+              "Sélectionner projet",
+              "Due Date",
+              "Opened Issues",
+              "Gantlab Legacy",
+            ].map((label, index) => (
+              <select
+                key={index}
+                className="form-select form-select-sm"
+                style={{ width: "22%" }}
+                onChange={
+                  index === 0
+                    ? (e) => {
+                        const project = projects.find(
+                          (p) => p.id === parseInt(e.target.value)
+                        );
+                        if (project) handleProjectChange(project);
+                      }
+                    : undefined
+                }
+                value={index === 0 ? selectedProject?.id || "" : ""}
+              >
+                <option value="" disabled>
+                  {label}
                 </option>
-              ))}
-            </select>
-            <select className="form-select" style={{ width: "20%" }}>
-              <option value="" disabled selected>
-                Due Date
-              </option>
-              {/* Ajoutez ici les options pour le select Due Date */}
-            </select>
-            <select className="form-select" style={{ width: "20%" }}>
-              <option value="" disabled selected>
-                Opened Issues
-              </option>
-              {/* Ajoutez ici les options pour le select Opened Issues */}
-            </select>
-            <select className="form-select" style={{ width: "20%" }}>
-              <option value="" disabled selected>
-                Gantlab Legacy
-              </option>
-              {/* Ajoutez ici les options pour le select Gantlab Legacy */}
-            </select>
+                {index === 0 &&
+                  projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+              </select>
+            ))}
           </div>
         </Col>
         <Col md={1} className="text-end">
-          <Button color="info" size="sm" onClick={handleLogout}>
+          <Button color="danger" size="sm" onClick={handleLogout}>
             Déconnexion
           </Button>
         </Col>
       </Row>
 
       {selectedProject && !issuesLoading && (
-        <Row className="flex-grow-1">
-          <Col md={3}>
+        <Row className="flex-grow-1 bg-light rounded-3 p-3">
+          <Col md={3} className="border-end">
             <MembersList />
           </Col>
           <Col md={9}>
-            <h2 className="h3 mb-3">
-              Diagramme de Gantt pour {selectedProject.name}
+            <h2 className="h4 mb-3 text-primary">
+              Diagramme de Gantt : {selectedProject.name}
             </h2>
             <ViewSwitcher
               onViewModeChange={(viewMode: ViewMode) => setView(viewMode)}
               onViewListChange={(isChecked: boolean) => setIsChecked(isChecked)}
               isChecked={isChecked}
             />
-            <div className="gantt-container">
+            <div className="gantt-container mt-3 bg-white rounded shadow-sm">
               <Legend />
               <Gantt
                 tasks={prepareGanttData()}
                 viewMode={view}
                 onDateChange={(task: Task) => {
                   console.log("On date change Id:" + task.id);
-                  // Ajoutez ici la logique pour mettre à jour les tâches
                 }}
                 onDelete={(task: Task) => {
-                  const conf = window.confirm(
-                    "Êtes-vous sûr de vouloir supprimer la tâche " +
-                      task.name +
-                      " ?"
+                  return window.confirm(
+                    `Êtes-vous sûr de vouloir supprimer la tâche "${task.name}" ?`
                   );
-                  if (conf) {
-                    // Ajoutez ici la logique pour supprimer la tâche
-                  }
-                  return conf;
                 }}
                 onProgressChange={(task: Task) => {
                   console.log("On progress change Id:" + task.id);
-                  // Ajoutez ici la logique pour mettre à jour la progression
                 }}
                 onDoubleClick={(task: Task) => {
                   alert("On Double Click event Id:" + task.id);
                 }}
                 onSelect={(task: Task, isSelected: boolean) => {
                   console.log(
-                    task.name +
-                      " has " +
-                      (isSelected ? "selected" : "unselected")
+                    `${task.name} has ${isSelected ? "selected" : "unselected"}`
                   );
                 }}
                 onExpanderClick={(task: Task) => {
                   console.log("On expander click Id:" + task.id);
-                  // Ajoutez ici la logique pour gérer l'expansion
                 }}
                 listCellWidth={isChecked ? "155px" : ""}
                 columnWidth={columnWidth}
-                ganttHeight={windowDimensions.height * 0.6}
+                ganttHeight={windowDimensions.height * 0.65}
                 headerHeight={60}
                 rowHeight={40}
                 barFill={80}
@@ -509,7 +496,11 @@ export default function Home() {
       )}
 
       {issuesLoading && (
-        <div className="loading">Chargement des problèmes...</div>
+        <div className="loading position-absolute top-50 start-50 translate-middle">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Chargement des problèmes...</span>
+          </div>
+        </div>
       )}
     </Container>
   );
