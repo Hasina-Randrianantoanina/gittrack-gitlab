@@ -373,35 +373,56 @@ export default function Home() {
 
   return (
     <Container fluid className="vh-100 d-flex flex-column p-3">
-      <Row className="mb-3">
-        <Col>
-          <h1>Filtres par projet</h1>
-        </Col>
-        <Col xs="auto">
-          <Button color="info" onClick={handleLogout}>
-            Se déconnecter
-          </Button>
-        </Col>
-      </Row>
-
-      <Row className="mb-3">
-        <Col>
-          <select
-            className="form-select"
-            onChange={(e) => {
-              const project = projects.find(
-                (p) => p.id === parseInt(e.target.value)
-              );
-              if (project) handleProjectChange(project);
-            }}
-            value={selectedProject?.id}
-          >
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
+      <Row className="mb-3 align-items-center">
+        <Col md={11}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <label style={{ minWidth: "60px", marginBottom: "0" }}>
+              Projets :
+            </label>
+            <select
+              className="form-select"
+              style={{ width: "20%" }}
+              onChange={(e) => {
+                const project = projects.find(
+                  (p) => p.id === parseInt(e.target.value)
+                );
+                if (project) handleProjectChange(project);
+              }}
+              value={selectedProject?.id || ""}
+            >
+              {/* <option value="" disabled>
+                Sélectionner projet
+              </option> */}
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+            <select className="form-select" style={{ width: "20%" }}>
+              <option value="" disabled selected>
+                Due Date
               </option>
-            ))}
-          </select>
+              {/* Ajoutez ici les options pour le select Due Date */}
+            </select>
+            <select className="form-select" style={{ width: "20%" }}>
+              <option value="" disabled selected>
+                Opened Issues
+              </option>
+              {/* Ajoutez ici les options pour le select Opened Issues */}
+            </select>
+            <select className="form-select" style={{ width: "20%" }}>
+              <option value="" disabled selected>
+                Gantlab Legacy
+              </option>
+              {/* Ajoutez ici les options pour le select Gantlab Legacy */}
+            </select>
+          </div>
+        </Col>
+        <Col md={1} className="text-end">
+          <Button color="info" size="sm" onClick={handleLogout}>
+            Déconnexion
+          </Button>
         </Col>
       </Row>
 
