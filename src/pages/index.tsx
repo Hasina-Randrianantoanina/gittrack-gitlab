@@ -4,7 +4,7 @@
 import React, { useEffect, useState, FC } from "react";
 import { getProjects, Project, getProjectIssues, Issue } from "../lib/gitlab";
 import { useRouter } from "next/router";
-import { Button, Container, Row, Col } from "reactstrap";
+import { Button, ButtonGroup, FormGroup, Label, Input , Container, Row, Col } from "reactstrap";
 import { Gantt, Task, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
 import {
@@ -105,16 +105,40 @@ const ViewSwitcher: FC<ViewSwitcherProps> = ({
   isChecked,
 }) => {
   return (
-    <div>
-      <button onClick={() => onViewModeChange(ViewMode.Day)}>Jour</button>
-      <button onClick={() => onViewModeChange(ViewMode.Week)}>Semaine</button>
-      <button onClick={() => onViewModeChange(ViewMode.Month)}>Mois</button>
-      <input
-        type="checkbox"
-        checked={isChecked}
-        onChange={() => onViewListChange(!isChecked)}
-      />
-      Afficher la liste des tâches
+    <div className="d-flex align-items-center mb-3">
+      <ButtonGroup className="me-3">
+        <Button
+          color="primary"
+          onClick={() => onViewModeChange(ViewMode.Day)}
+          outline
+        >
+          Jour
+        </Button>
+        <Button
+          color="primary"
+          onClick={() => onViewModeChange(ViewMode.Week)}
+          outline
+        >
+          Semaine
+        </Button>
+        <Button
+          color="primary"
+          onClick={() => onViewModeChange(ViewMode.Month)}
+          outline
+        >
+          Mois
+        </Button>
+      </ButtonGroup>
+      <FormGroup check className="mb-0">
+        <Label check>
+          <Input
+            type="checkbox"
+            checked={isChecked}
+            onChange={() => onViewListChange(!isChecked)}
+          />{" "}
+          Afficher la liste des tâches
+        </Label>
+      </FormGroup>
     </div>
   );
 };
@@ -285,18 +309,17 @@ export default function Home() {
         </Col>
       </Row>
 
-      <ViewSwitcher
-        onViewModeChange={(viewMode: ViewMode) => setView(viewMode)}
-        onViewListChange={(isChecked: boolean) => setIsChecked(isChecked)}
-        isChecked={isChecked}
-      />
-
       {selectedProject && !issuesLoading && (
         <Row className="flex-grow-1">
           <Col>
             <h2 className="h3 mb-3">
               Diagramme de Gantt pour {selectedProject.name}
             </h2>
+            <ViewSwitcher
+              onViewModeChange={(viewMode: ViewMode) => setView(viewMode)}
+              onViewListChange={(isChecked: boolean) => setIsChecked(isChecked)}
+              isChecked={isChecked}
+            />
             <div className="gantt-container">
               <Gantt
                 tasks={prepareGanttData()}
