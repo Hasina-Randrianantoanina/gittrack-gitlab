@@ -275,6 +275,53 @@ export default function Home() {
 
   if (loading) return <div className="loading">Chargement...</div>;
 
+  // Légende des couleurs pour le diagramme de Gantt
+  const Legend = () => {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-around",
+          margin: "20px 0",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div
+            style={{
+              width: "20px",
+              height: "20px",
+              backgroundColor: "#FFCCCB",
+              marginRight: "8px",
+            }}
+          ></div>
+          <span>En retard</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div
+            style={{
+              width: "20px",
+              height: "20px",
+              backgroundColor: "#90EE90",
+              marginRight: "8px",
+            }}
+          ></div>
+          <span>A faire</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div
+            style={{
+              width: "20px",
+              height: "20px",
+              backgroundColor: "#007bff",
+              marginRight: "8px",
+            }}
+          ></div>
+          <span>En cours</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Container fluid className="vh-100 d-flex flex-column p-3">
       <Row className="mb-3">
@@ -321,6 +368,7 @@ export default function Home() {
               isChecked={isChecked}
             />
             <div className="gantt-container">
+              <Legend />
               <Gantt
                 tasks={prepareGanttData()}
                 viewMode={view}
