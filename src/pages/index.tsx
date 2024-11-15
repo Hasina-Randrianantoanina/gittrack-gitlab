@@ -106,15 +106,15 @@ const ViewSwitcher: FC<ViewSwitcherProps> = ({
 }) => {
   return (
     <div>
-      <button onClick={() => onViewModeChange(ViewMode.Day)}>Day</button>
-      <button onClick={() => onViewModeChange(ViewMode.Week)}>Week</button>
-      <button onClick={() => onViewModeChange(ViewMode.Month)}>Month</button>
+      <button onClick={() => onViewModeChange(ViewMode.Day)}>Jour</button>
+      <button onClick={() => onViewModeChange(ViewMode.Week)}>Semaine</button>
+      <button onClick={() => onViewModeChange(ViewMode.Month)}>Mois</button>
       <input
         type="checkbox"
         checked={isChecked}
         onChange={() => onViewListChange(!isChecked)}
       />
-      Show Task List
+      Afficher la liste des tâches
     </div>
   );
 };
@@ -143,7 +143,7 @@ export default function Home() {
           fetchIssues(data[0].id);
         }
       } catch (error) {
-        console.error("Failed to fetch projects:", error);
+        console.error("Échec de la récupération des projets:", error);
       } finally {
         setLoading(false);
       }
@@ -168,7 +168,7 @@ export default function Home() {
       const issuesData = await getProjectIssues(projectId);
       setIssues(issuesData);
     } catch (error) {
-      console.error("Failed to fetch issues:", error);
+      console.error("Échec de la récupération des problèmes:", error);
       setIssues([]);
     } finally {
       setIssuesLoading(false);
@@ -307,7 +307,9 @@ export default function Home() {
                 }}
                 onDelete={(task: Task) => {
                   const conf = window.confirm(
-                    "Are you sure about " + task.name + " ?"
+                    "Êtes-vous sûr de vouloir supprimer la tâche " +
+                      task.name +
+                      " ?"
                   );
                   if (conf) {
                     // Ajoutez ici la logique pour supprimer la tâche
