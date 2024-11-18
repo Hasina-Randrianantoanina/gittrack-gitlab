@@ -85,11 +85,11 @@ const CustomHeader: FC<HeaderProps> = ({
   headerWidth,
   scrollY,
 }) => {
-  const style = {
+  const style: React.CSSProperties = {
     height: headerHeight,
     width: headerWidth,
     display: "flex",
-    flexDirection: "column" as "column",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     transform: `translateY(${scrollY}px)`,
@@ -195,13 +195,15 @@ const ViewSwitcher: FC<ViewSwitcherProps> = ({
           Mois
         </Button>
       </ButtonGroup>
-      <FormGroup check className="mb-0">
-        <Label check>
-          <Input
-            type="checkbox"
-            checked={isChecked}
-            onChange={() => onViewListChange(!isChecked)}
-          />{" "}
+      <FormGroup switch>
+        <Input
+          type="switch"
+          id="taskListSwitch"
+          name="taskListSwitch"
+          checked={isChecked}
+          onChange={() => onViewListChange(!isChecked)}
+        />
+        <Label check for="taskListSwitch">
           Afficher la liste des tâches
         </Label>
       </FormGroup>
