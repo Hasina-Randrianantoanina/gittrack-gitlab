@@ -107,6 +107,58 @@ const CustomHeader: FC<HeaderProps> = ({
   );
 };
 
+const CustomGanttHeader: FC<{
+  headerHeight: number;
+  rowWidth: string;
+}> = ({ headerHeight, rowWidth }) => {
+  return (
+    <div
+      className="custom-gantt-header"
+      style={{
+        height: headerHeight,
+        display: "flex",
+        alignItems: "center",
+      }}
+    >
+      <div
+        style={{
+          width: rowWidth,
+          textAlign: "center",
+          // fontWeight: "bold",
+        }}
+      >
+        Issue
+      </div>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            textAlign: "center",
+            // fontWeight: "bold",
+          }}
+        >
+          Début
+        </div>
+        <div
+          style={{
+            flex: 1,
+            textAlign: "center",
+            // fontWeight: "bold",
+          }}
+        >
+          Fin
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface ViewSwitcherProps {
   onViewModeChange: (viewMode: ViewMode) => void;
   onViewListChange: (isChecked: boolean) => void;
@@ -507,6 +559,7 @@ export default function Home() {
                 timeStep={86400000}
                 arrowColor="#ccc"
                 fontSize={12}
+                TaskListHeader={CustomGanttHeader}
               />
             </div>
           </Col>
