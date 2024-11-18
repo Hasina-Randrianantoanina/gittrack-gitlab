@@ -194,6 +194,13 @@ const ViewSwitcher: FC<ViewSwitcherProps> = ({
         >
           Mois
         </Button>
+       {/*  <Button
+          color="primary"
+          onClick={() => onViewModeChange(ViewMode.Year)}
+          outline
+        >
+          Année
+        </Button> */}
       </ButtonGroup>
       <FormGroup switch>
         <Input
@@ -571,7 +578,7 @@ export default function Home() {
       {issuesLoading && (
         <div className="loading position-absolute top-50 start-50 translate-middle">
           <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Chargement des problèmes...</span>
+            <span className="visually-hidden">Chargement ...</span>
           </div>
         </div>
       )}
