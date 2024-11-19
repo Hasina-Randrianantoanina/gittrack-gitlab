@@ -13,7 +13,7 @@ import {
 } from "../lib/gitlab";
 import { useRouter } from "next/router";
 import { Button, ButtonGroup, FormGroup, Label, Input , Container, Row, Col } from "reactstrap";
-import { Gantt, Task, ViewMode } from "gantt-task-react";
+import { Gantt, Task as GanttTask, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
 import {
   parseISO,
@@ -24,13 +24,21 @@ import {
   endOfMonth,
 } from "date-fns";
 import { fr } from "date-fns/locale";
+import Image from "next/image";
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 
 const ganttLocale = "fr";
 
+interface Task extends GanttTask {
+  assignee?: {
+    name: string;
+    avatar_url: string;
+  };
+}
+
 interface CustomTooltipProps {
-  task: Task & { assignees?: string };
+  task: Task;
   fontSize: string;
   fontFamily: string;
   onAssign: (taskId: string, userId: number) => void;
@@ -67,12 +75,11 @@ const CustomTooltipContent: FC<CustomTooltipProps> = ({
         <strong>Progrès:</strong> {task.progress}%
       </div>
       <div>
-        <strong>Assignée à:</strong> {task.assignees || "Aucun"}
+        <strong>Assignée à:</strong> {task.assignee?.name || "Aucun"}
       </div>
     </div>
   );
 };
-
 
 interface HeaderProps {
   headerHeight: number;
@@ -124,7 +131,6 @@ const CustomGanttHeader: FC<{
         style={{
           width: rowWidth,
           textAlign: "center",
-          // fontWeight: "bold",
         }}
       >
         Issue
@@ -140,7 +146,6 @@ const CustomGanttHeader: FC<{
           style={{
             flex: 1,
             textAlign: "center",
-            // fontWeight: "bold",
           }}
         >
           Début
@@ -149,12 +154,44 @@ const CustomGanttHeader: FC<{
           style={{
             flex: 1,
             textAlign: "center",
-            // fontWeight: "bold",
           }}
         >
           Fin
         </div>
+        <div
+          style={{
+            flex: 1,
+            textAlign: "center",
+          }}
+        >
+          Personne en charge
+        </div>
       </div>
+    </div>
+  );
+};
+
+const AssigneeProfile: FC<{
+  assignee?: { name: string; avatar_url: string };
+}> = ({ assignee }) => {
+  if (!assignee) return <div>Non assigné</div>;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Image
+        src={assignee.avatar_url}
+        alt={assignee.name}
+        width={24}
+        height={24}
+        style={{ borderRadius: "50%", marginRight: 8 }}
+      />
+      <span>{assignee.name}</span>
     </div>
   );
 };
@@ -324,7 +361,7 @@ export default function Home() {
     }
   };
 
-  const prepareGanttData = (): (Task & { assignees?: string })[] => {
+  const prepareGanttData = (): Task[] => {
     const today = new Date();
     const monthStart = startOfMonth(today);
     const monthEnd = endOfMonth(today);
@@ -340,6 +377,7 @@ export default function Home() {
           type: "task",
           project: selectedProject?.name || "",
           styles: { backgroundColor: "#E0E0E0" },
+          assignee: undefined,
         },
       ];
     }
@@ -363,7 +401,13 @@ export default function Home() {
         progress: 0,
         type: "task",
         project: selectedProject?.name || "",
-        assignees: issue.assignees.map((a) => a.name).join(", "),
+        assignee:
+          issue.assignees.length > 0
+            ? {
+                name: issue.assignees[0].name,
+                avatar_url: issue.assignees[0].avatar_url,
+              }
+            : undefined,
         styles: {
           backgroundColor: isOverdue
             ? "#FFCCCB"
@@ -569,6 +613,33 @@ export default function Home() {
                 arrowColor="#ccc"
                 fontSize={12}
                 TaskListHeader={CustomGanttHeader}
+                TaskListTable={(props) => (
+                  <div>
+                    {props.tasks.map((task: Task) => (
+                      <div
+                        key={task.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          height: props.rowHeight,
+                        }}
+                      >
+                        <div style={{ width: props.rowWidth }}>{task.name}</div>
+                        <div style={{ flex: 1, display: "flex" }}>
+                          <div style={{ flex: 1, textAlign: "center" }}>
+                            {formatDate(task.start)}
+                          </div>
+                          <div style={{ flex: 1, textAlign: "center" }}>
+                            {formatDate(task.end)}
+                          </div>
+                          <div style={{ flex: 1, textAlign: "center" }}>
+                            <AssigneeProfile assignee={task.assignee} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               />
             </div>
           </Col>
