@@ -114,10 +114,10 @@ const CustomHeader: FC<HeaderProps> = ({
   );
 };
 
-const CustomGanttHeader: FC<{
-  headerHeight: number;
-  rowWidth: string;
-}> = ({ headerHeight, rowWidth }) => {
+const CustomGanttHeader: FC<{ headerHeight: number; rowWidth: string }> = ({
+  headerHeight,
+  rowWidth,
+}) => {
   return (
     <div
       className="custom-gantt-header"
@@ -127,43 +127,11 @@ const CustomGanttHeader: FC<{
         alignItems: "center",
       }}
     >
-      <div
-        style={{
-          width: rowWidth,
-          textAlign: "center",
-        }}
-      >
-        Issue
-      </div>
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
-        <div
-          style={{
-            flex: 1,
-            textAlign: "center",
-          }}
-        >
-          Début
-        </div>
-        <div
-          style={{
-            flex: 1,
-            textAlign: "center",
-          }}
-        >
-          Fin
-        </div>
-        <div
-          style={{
-            flex: 1,
-            textAlign: "center",
-          }}
-        >
+      <div style={{ width: rowWidth, textAlign: "center" }}>Tâche</div>
+      <div style={{ flex: 1, display: "flex" }}>
+        <div style={{ width: "150px", textAlign: "center" }}>Début</div>
+        <div style={{ width: "150px", textAlign: "center" }}>Fin</div>
+        <div style={{ width: "200px", textAlign: "center" }}>
           Personne en charge
         </div>
       </div>
@@ -424,13 +392,12 @@ export default function Home() {
     });
   };
 
-  let columnWidth = 60; // Augmenté pour le mode jour
-  if (view === ViewMode.Month) {
-    columnWidth = 300;
-  } else if (view === ViewMode.Week) {
-    columnWidth = 250;
-  }
-
+ let columnWidth = 60; // Augmenté pour le mode jour
+ if (view === ViewMode.Month) {
+   columnWidth = 300;
+ } else if (view === ViewMode.Week) {
+   columnWidth = 250;
+ }
   if (loading) return <div className="loading">Chargement...</div>;
 
   // Légende des couleurs pour le diagramme de Gantt
@@ -549,10 +516,10 @@ export default function Home() {
 
       {selectedProject && !issuesLoading && (
         <Row className="flex-grow-1 bg-light rounded-3 p-3">
-          <Col md={3} className="border-end">
+          <Col md={2} className="border-end">
             <MembersList />
           </Col>
-          <Col md={9}>
+          <Col md={10}>
             <h2 className="h4 mb-3 text-primary">
               Diagramme de Gantt : {selectedProject.name}
             </h2>
@@ -588,11 +555,11 @@ export default function Home() {
                 onExpanderClick={(task: Task) => {
                   console.log("On expander click Id:" + task.id);
                 }}
-                listCellWidth={isChecked ? "155px" : ""}
+                listCellWidth={isChecked ? "300px" : ""}
                 columnWidth={columnWidth}
                 ganttHeight={windowDimensions.height * 0.65}
                 headerHeight={60}
-                rowHeight={40}
+                rowHeight={60}
                 barFill={80}
                 barProgressColor="#007bff"
                 barBackgroundColor="#E0E0E0"
@@ -624,15 +591,19 @@ export default function Home() {
                           height: props.rowHeight,
                         }}
                       >
-                        <div style={{ width: props.rowWidth }}>{task.name}</div>
+                        <div
+                          style={{ width: props.rowWidth, padding: "0 10px" }}
+                        >
+                          {task.name}
+                        </div>
                         <div style={{ flex: 1, display: "flex" }}>
-                          <div style={{ flex: 1, textAlign: "center" }}>
+                          <div style={{ width: "150px", textAlign: "center" }}>
                             {formatDate(task.start)}
                           </div>
-                          <div style={{ flex: 1, textAlign: "center" }}>
+                          <div style={{ width: "150px", textAlign: "center" }}>
                             {formatDate(task.end)}
                           </div>
-                          <div style={{ flex: 1, textAlign: "center" }}>
+                          <div style={{ width: "200px", textAlign: "center" }}>
                             <AssigneeProfile assignee={task.assignee} />
                           </div>
                         </div>
