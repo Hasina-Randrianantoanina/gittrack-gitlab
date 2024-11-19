@@ -1,7 +1,7 @@
 // src/pages/index.tsx
 "use client";
 
-import React, { useEffect, useState, FC } from "react";
+import React, { useEffect, useState, FC, CSSProperties } from "react";
 import {
   getProjects,
   Project,
@@ -12,7 +12,7 @@ import {
   assignMemberToIssue,
 } from "../lib/gitlab";
 import { useRouter } from "next/router";
-import { Button, ButtonGroup, FormGroup, Label, Input , Container, Row, Col } from "reactstrap";
+import { Button, ButtonGroup, FormGroup, Label, Input , Container, Row, Col, Progress } from "reactstrap";
 import { Gantt, Task as GanttTask, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
 import {
@@ -223,6 +223,83 @@ const ViewSwitcher: FC<ViewSwitcherProps> = ({
   );
 };
 
+interface CustomTaskBarProps {
+  task: Task & {
+    styles?: {
+      progressColor?: string;
+      progressSelectedColor?: string;
+    };
+  };
+  isSelected: boolean;
+  onMouseDown: (event: React.MouseEvent<SVGGElement, MouseEvent>) => void;
+  onMouseUp: (event: React.MouseEvent<SVGGElement, MouseEvent>) => void;
+  onMouseEnter: (event: React.MouseEvent<SVGGElement, MouseEvent>) => void;
+  onMouseLeave: (event: React.MouseEvent<SVGGElement, MouseEvent>) => void;
+  style: CSSProperties & {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  barCornerRadius: number;
+}
+
+const CustomTaskBar: React.FC<CustomTaskBarProps> = ({
+  task,
+  isSelected,
+  onMouseDown,
+  onMouseUp,
+  onMouseEnter,
+  onMouseLeave,
+  style,
+  barCornerRadius,
+}) => {
+  const progressColor = isSelected
+    ? task.styles?.progressSelectedColor || "#FFE436"
+    : task.styles?.progressColor || "#FFE436";
+
+  return (
+    <g
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <foreignObject
+        x={style.x}
+        y={style.y}
+        width={style.width}
+        height={style.height}
+      >
+        <div style={{ width: "100%", height: "100%", position: "relative" }}>
+          <Progress
+            value={task.progress}
+            style={{
+              height: "100%",
+              backgroundColor: style.backgroundColor as string,
+              borderRadius: `${barCornerRadius}px`,
+            }}
+            color={progressColor}
+          >
+            <span
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                color: "black",
+                fontSize: "12px",
+              }}
+            >
+              {`${task.progress}%`}
+            </span>
+          </Progress>
+        </div>
+      </foreignObject>
+    </g>
+  );
+}
+
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -361,12 +438,28 @@ export default function Home() {
       const isNotStarted =
         issue.state === "opened" && issue.time_stats.total_time_spent === 0;
 
+      // Calcul du pourcentage de progression
+      let progress = 0;
+      if (issue.time_stats.time_estimate > 0) {
+        progress = Math.min(
+          100,
+          (issue.time_stats.total_time_spent / issue.time_stats.time_estimate) *
+            100
+        );
+      } else if (issue.state === "closed") {
+        progress = 100;
+      } else {
+        const totalDuration = endDate.getTime() - startDate.getTime();
+        const elapsedDuration = today.getTime() - startDate.getTime();
+        progress = Math.min(100, (elapsedDuration / totalDuration) * 100);
+      }
+
       return {
         id: issue.iid.toString(),
         name: issue.title,
         start: startDate,
         end: endDate,
-        progress: 0,
+        progress: Math.round(progress), // Arrondi à l'entier le plus proche
         type: "task",
         project: selectedProject?.name || "",
         assignee:
@@ -387,6 +480,8 @@ export default function Home() {
             : isNotStarted
             ? "#32CD32"
             : "#0056b3",
+          progressColor: "#FFE436", // Couleur de la barre de progression
+          progressSelectedColor: "#FFCE00", // Couleur de la barre de progression lorsque sélectionnée
         },
       };
     });
@@ -442,6 +537,17 @@ export default function Home() {
             }}
           ></div>
           <span>En cours</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div
+            style={{
+              width: "20px",
+              height: "20px",
+              backgroundColor: "#FFE436",
+              marginRight: "8px",
+            }}
+          ></div>
+          <span>Progression</span>
         </div>
       </div>
     );
@@ -560,7 +666,7 @@ export default function Home() {
                 ganttHeight={windowDimensions.height * 0.65}
                 headerHeight={60}
                 rowHeight={60}
-                barFill={80}
+                barFill={65}
                 barProgressColor="#007bff"
                 barBackgroundColor="#E0E0E0"
                 handleWidth={8}
@@ -611,6 +717,7 @@ export default function Home() {
                     ))}
                   </div>
                 )}
+                TaskBar={CustomTaskBar}
               />
             </div>
           </Col>
