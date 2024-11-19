@@ -10,6 +10,8 @@ import {
   getProjectMembers,
   ProjectMember,
   assignMemberToIssue,
+  UserInfo,
+  getUserInfo,
 } from "../lib/gitlab";
 import { useRouter } from "next/router";
 import { Button, ButtonGroup, FormGroup, Label, Input , Container, Row, Col, Progress } from "reactstrap";
@@ -255,8 +257,8 @@ const CustomTaskBar: React.FC<CustomTaskBarProps> = ({
   barCornerRadius,
 }) => {
   const progressColor = isSelected
-    ? task.styles?.progressSelectedColor || "#FFE436"
-    : task.styles?.progressColor || "#FFE436";
+    ? task.styles?.progressSelectedColor || "#FFC107"
+    : task.styles?.progressColor || "#FFC107";
 
   return (
     <g
@@ -314,6 +316,7 @@ export default function Home() {
   const [view, setView] = useState<ViewMode>(ViewMode.Day);
   const [isChecked, setIsChecked] = useState(true);
   const router = useRouter();
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -332,6 +335,32 @@ export default function Home() {
     };
 
     fetchProjects();
+    updateWindowDimensions();
+    window.addEventListener("resize", updateWindowDimensions);
+    return () => window.removeEventListener("resize", updateWindowDimensions);
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userInfoData = await getUserInfo();
+        setUserInfo(userInfoData);
+
+        // Le reste de votre code pour récupérer les projets, etc.
+        const projectsData = await getProjects();
+        setProjects(projectsData);
+        if (projectsData.length > 0) {
+          setSelectedProject(projectsData[0]);
+          fetchIssues(projectsData[0].id);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
     updateWindowDimensions();
     window.addEventListener("resize", updateWindowDimensions);
     return () => window.removeEventListener("resize", updateWindowDimensions);
@@ -480,7 +509,7 @@ export default function Home() {
             : isNotStarted
             ? "#32CD32"
             : "#0056b3",
-          progressColor: "#FFE436", // Couleur de la barre de progression
+          progressColor: "#FFC107", // Couleur de la barre de progression
           progressSelectedColor: "#FFCE00", // Couleur de la barre de progression lorsque sélectionnée
         },
       };
@@ -543,7 +572,7 @@ export default function Home() {
             style={{
               width: "20px",
               height: "20px",
-              backgroundColor: "#FFE436",
+              backgroundColor: "#FFC107",
               marginRight: "8px",
             }}
           ></div>
@@ -569,168 +598,157 @@ export default function Home() {
 
   return (
     <Container fluid className="vh-100 d-flex flex-column py-4 px-5">
-      <Row className="mb-4 align-items-center">
-        <Col md={11}>
-          <div className="d-flex align-items-center gap-3">
-            <label
-              className="fw-bold text-muted mb-0"
-              style={{ minWidth: "70px" }}
-            >
-              Projets :
-            </label>
-            {[
-              "Sélectionner projet",
-              "Due Date",
-              "Opened Issues",
-              "Gantlab Legacy",
-            ].map((label, index) => (
-              <select
-                key={index}
-                className="form-select form-select-sm"
-                style={{ width: "22%" }}
-                onChange={
-                  index === 0
-                    ? (e) => {
-                        const project = projects.find(
-                          (p) => p.id === parseInt(e.target.value)
-                        );
-                        if (project) handleProjectChange(project);
-                      }
-                    : undefined
-                }
-                value={index === 0 ? selectedProject?.id || "" : ""}
-              >
-                <option value="" disabled>
-                  {label}
-                </option>
-                {index === 0 &&
-                  projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-              </select>
-            ))}
-          </div>
-        </Col>
-        <Col md={1} className="text-end">
-          <Button color="danger" size="sm" onClick={handleLogout}>
-            Déconnexion
-          </Button>
-        </Col>
-      </Row>
+  <Row className="mb-4">
+    <Col md={6}>
+      {userInfo && <h2 className="h4 mb-3">Bienvenue, {userInfo.name}</h2>}
+    </Col>
+    <Col md={6} className="text-end">
+      <Button color="danger" size="sm" onClick={handleLogout}>
+        Déconnexion
+      </Button>
+    </Col>
+  </Row>
 
-      {selectedProject && !issuesLoading && (
-        <Row className="flex-grow-1 bg-light rounded-3 p-3">
-          <Col md={2} className="border-end">
-            <MembersList />
-          </Col>
-          <Col md={10}>
-            <h2 className="h4 mb-3 text-primary">
-              Diagramme de Gantt : {selectedProject.name}
-            </h2>
-            <ViewSwitcher
-              onViewModeChange={(viewMode: ViewMode) => setView(viewMode)}
-              onViewListChange={(isChecked: boolean) => setIsChecked(isChecked)}
-              isChecked={isChecked}
-            />
-            <div className="gantt-container mt-3 bg-white rounded shadow-sm">
-              <Legend />
-              <Gantt
-                tasks={prepareGanttData()}
-                viewMode={view}
-                onDateChange={(task: Task) => {
-                  console.log("On date change Id:" + task.id);
-                }}
-                onDelete={(task: Task) => {
-                  return window.confirm(
-                    `Êtes-vous sûr de vouloir supprimer la tâche "${task.name}" ?`
-                  );
-                }}
-                onProgressChange={(task: Task) => {
-                  console.log("On progress change Id:" + task.id);
-                }}
-                onDoubleClick={(task: Task) => {
-                  alert("On Double Click event Id:" + task.id);
-                }}
-                onSelect={(task: Task, isSelected: boolean) => {
-                  console.log(
-                    `${task.name} has ${isSelected ? "selected" : "unselected"}`
-                  );
-                }}
-                onExpanderClick={(task: Task) => {
-                  console.log("On expander click Id:" + task.id);
-                }}
-                listCellWidth={isChecked ? "300px" : ""}
-                columnWidth={columnWidth}
-                ganttHeight={windowDimensions.height * 0.65}
-                headerHeight={60}
-                rowHeight={60}
-                barFill={65}
-                barProgressColor="#007bff"
-                barBackgroundColor="#E0E0E0"
-                handleWidth={8}
-                todayColor="rgba(252,248,227,0.5)"
-                projectProgressColor="#ff9e0d"
-                rtl={false}
-                TooltipContent={(props) => (
-                  <CustomTooltipContent
-                    {...props}
-                    onAssign={handleAssignMember}
-                    projectMembers={projectMembers}
-                  />
-                )}
-                HeaderContent={CustomHeader}
-                locale={ganttLocale}
-                timeStep={86400000}
-                arrowColor="#ccc"
-                fontSize={12}
-                TaskListHeader={CustomGanttHeader}
-                TaskListTable={(props) => (
-                  <div>
-                    {props.tasks.map((task: Task) => (
-                      <div
-                        key={task.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          height: props.rowHeight,
-                        }}
-                      >
-                        <div
-                          style={{ width: props.rowWidth, padding: "0 10px" }}
-                        >
-                          {task.name}
-                        </div>
-                        <div style={{ flex: 1, display: "flex" }}>
-                          <div style={{ width: "150px", textAlign: "center" }}>
-                            {formatDate(task.start)}
-                          </div>
-                          <div style={{ width: "150px", textAlign: "center" }}>
-                            {formatDate(task.end)}
-                          </div>
-                          <div style={{ width: "200px", textAlign: "center" }}>
-                            <AssigneeProfile assignee={task.assignee} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                TaskBar={CustomTaskBar}
+  <Row className="mb-4">
+    <Col>
+      <div className="d-flex align-items-center gap-3">
+        <label className="fw-bold text-muted mb-0" style={{ minWidth: "70px" }}>
+          Projets :
+        </label>
+        <select
+          className="form-select form-select-sm"
+          style={{ width: "300px" }}
+          onChange={(e) => {
+            const project = projects.find(
+              (p) => p.id === parseInt(e.target.value)
+            );
+            if (project) handleProjectChange(project);
+          }}
+          value={selectedProject?.id || ""}
+        >
+          <option value="" disabled>
+            Sélectionner projet
+          </option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </Col>
+  </Row>
+
+  {selectedProject && !issuesLoading && (
+    <Row className="flex-grow-1 bg-light rounded-3 p-3">
+      <Col md={2} className="border-end">
+        <MembersList />
+      </Col>
+      <Col md={10}>
+        <h2 className="h4 mb-3 text-primary">
+          Diagramme de Gantt : {selectedProject.name}
+        </h2>
+        <ViewSwitcher
+          onViewModeChange={(viewMode: ViewMode) => setView(viewMode)}
+          onViewListChange={(isChecked: boolean) => setIsChecked(isChecked)}
+          isChecked={isChecked}
+        />
+        <div className="gantt-container mt-3 bg-white rounded shadow-sm">
+          <Legend />
+          <Gantt
+            tasks={prepareGanttData()}
+            viewMode={view}
+            onDateChange={(task: Task) => {
+              console.log("On date change Id:" + task.id);
+            }}
+            onDelete={(task: Task) => {
+              return window.confirm(
+                `Êtes-vous sûr de vouloir supprimer la tâche "${task.name}" ?`
+              );
+            }}
+            onProgressChange={(task: Task) => {
+              console.log("On progress change Id:" + task.id);
+            }}
+            onDoubleClick={(task: Task) => {
+              alert("On Double Click event Id:" + task.id);
+            }}
+            onSelect={(task: Task, isSelected: boolean) => {
+              console.log(
+                `${task.name} has ${isSelected ? "selected" : "unselected"}`
+              );
+            }}
+            onExpanderClick={(task: Task) => {
+              console.log("On expander click Id:" + task.id);
+            }}
+            listCellWidth={isChecked ? "300px" : ""}
+            columnWidth={columnWidth}
+            ganttHeight={windowDimensions.height * 0.65}
+            headerHeight={60}
+            rowHeight={60}
+            barFill={65}
+            barProgressColor="#007bff"
+            barBackgroundColor="#E0E0E0"
+            handleWidth={8}
+            todayColor="rgba(252,248,227,0.5)"
+            projectProgressColor="#ff9e0d"
+            rtl={false}
+            TooltipContent={(props) => (
+              <CustomTooltipContent
+                {...props}
+                onAssign={handleAssignMember}
+                projectMembers={projectMembers}
               />
-            </div>
-          </Col>
-        </Row>
-      )}
-
-      {issuesLoading && (
-        <div className="loading position-absolute top-50 start-50 translate-middle">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Chargement ...</span>
-          </div>
+            )}
+            HeaderContent={CustomHeader}
+            locale={ganttLocale}
+            timeStep={86400000}
+            arrowColor="#ccc"
+            fontSize={12}
+            TaskListHeader={CustomGanttHeader}
+            TaskListTable={(props) => (
+              <div>
+                {props.tasks.map((task: Task) => (
+                  <div
+                    key={task.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      height: props.rowHeight,
+                    }}
+                  >
+                    <div style={{ width: props.rowWidth, padding: "0 10px" }}>
+                      {task.name}
+                    </div>
+                    <div style={{ flex: 1, display: "flex" }}>
+                      <div style={{ width: "150px", textAlign: "center" }}>
+                        {formatDate(task.start)}
+                      </div>
+                      <div style={{ width: "150px", textAlign: "center" }}>
+                        {formatDate(task.end)}
+                      </div>
+                      <div style={{ width: "200px", textAlign: "center" }}>
+                        <AssigneeProfile assignee={task.assignee} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            TaskBar={CustomTaskBar}
+          />
         </div>
-      )}
-    </Container>
+      </Col>
+    </Row>
+  )}
+
+  {issuesLoading && (
+    <div className="loading position-absolute top-50 start-50 translate-middle">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Chargement ...</span>
+      </div>
+    </div>
+  )}
+</Container>
+
   );
 }

@@ -186,3 +186,22 @@ export const assignMemberToIssue = async (projectId: number, issueIid: number, u
     throw error;
   }
 };
+
+export interface UserInfo {
+  id: number;
+  name: string;
+  username: string;
+  email: string;
+  avatar_url: string;
+}
+
+export const getUserInfo = async (): Promise<UserInfo> => {
+  try {
+    console.log("Fetching user information from:", `${gitlabApiUrl}/user`);
+    const response = await gitlabApi.get("/user");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user information:", error);
+    throw error;
+  }
+};
