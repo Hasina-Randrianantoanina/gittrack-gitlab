@@ -257,8 +257,8 @@ const CustomTaskBar: React.FC<CustomTaskBarProps> = ({
   barCornerRadius,
 }) => {
   const progressColor = isSelected
-    ? task.styles?.progressSelectedColor || "#FFC107"
-    : task.styles?.progressColor || "#FFC107";
+    ? task.styles?.progressSelectedColor || "#F8DB1B"
+    : task.styles?.progressColor || "#F8DB1B";
 
   return (
     <g
@@ -509,8 +509,8 @@ export default function Home() {
             : isNotStarted
             ? "#32CD32"
             : "#0056b3",
-          progressColor: "#FFC107", // Couleur de la barre de progression
-          progressSelectedColor: "#FFCE00", // Couleur de la barre de progression lorsque sélectionnée
+          progressColor: "#F8DB1B", // Couleur de la barre de progression
+          progressSelectedColor: "#FACA22", // Couleur de la barre de progression lorsque sélectionnée
         },
       };
     });
@@ -572,7 +572,7 @@ export default function Home() {
             style={{
               width: "20px",
               height: "20px",
-              backgroundColor: "#FFC107",
+              backgroundColor: "#F8DB1B",
               marginRight: "8px",
             }}
           ></div>
