@@ -530,53 +530,79 @@ export default function Home() {
       <div
         style={{
           display: "flex",
-          justifyContent: "space-around",
-          margin: "20px 0",
+          justifyContent: "flex-end", // Aligne à droite
+          margin: "20px 20px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           <div
             style={{
-              width: "20px",
-              height: "20px",
-              backgroundColor: "#FFCCCB",
-              marginRight: "8px",
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "8px",
             }}
-          ></div>
-          <span>En retard</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
+          >
+            <div
+              style={{
+                width: "20px",
+                height: "20px",
+                backgroundColor: "#FFCCCB",
+                marginRight: "8px",
+              }}
+            ></div>
+            <span>En retard</span>
+          </div>
           <div
             style={{
-              width: "20px",
-              height: "20px",
-              backgroundColor: "#90EE90",
-              marginRight: "8px",
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "8px",
             }}
-          ></div>
-          <span>A faire</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
+          >
+            <div
+              style={{
+                width: "20px",
+                height: "20px",
+                backgroundColor: "#90EE90",
+                marginRight: "8px",
+              }}
+            ></div>
+            <span>A faire</span>
+          </div>
           <div
             style={{
-              width: "20px",
-              height: "20px",
-              backgroundColor: "#007bff",
-              marginRight: "8px",
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "8px",
             }}
-          ></div>
-          <span>En cours</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <div
-            style={{
-              width: "20px",
-              height: "20px",
-              backgroundColor: "#F8DB1B",
-              marginRight: "8px",
-            }}
-          ></div>
-          <span>Progression</span>
+          >
+            <div
+              style={{
+                width: "20px",
+                height: "20px",
+                backgroundColor: "#007bff",
+                marginRight: "8px",
+              }}
+            ></div>
+            <span>En cours</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div
+              style={{
+                width: "20px",
+                height: "20px",
+                backgroundColor: "#F8DB1B",
+                marginRight: "8px",
+              }}
+            ></div>
+            <span>Progression</span>
+          </div>
         </div>
       </div>
     );
