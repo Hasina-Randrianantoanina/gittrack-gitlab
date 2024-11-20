@@ -24,6 +24,7 @@ import {
   Row,
   Col,
   Progress,
+  Tooltip,
 } from "reactstrap";
 import { Gantt, Task as GanttTask, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
@@ -37,6 +38,7 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import Image from "next/image";
+import { FiRefreshCw } from "react-icons/fi";
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 
@@ -329,6 +331,9 @@ export default function Home() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [sortByDueDate, setSortByDueDate] = useState(false);
   const [filterOpenedIssues, setFilterOpenedIssues] = useState(false);
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+
+  const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -631,6 +636,13 @@ export default function Home() {
 
     return sorted;
   };
+
+  const refreshGanttData = () => {
+    if (selectedProject) {
+      fetchIssues(selectedProject.id);
+    }
+  };
+
   return (
     <Container fluid className="vh-100 d-flex flex-column py-4 px-5">
       <Row className="mb-4 align-items-center">
@@ -709,7 +721,6 @@ export default function Home() {
                 }
                 isChecked={isChecked}
               />
-              {/* Contrôle de tri par Due Date */}
               <Button
                 color="primary"
                 size="sm"
@@ -717,8 +728,6 @@ export default function Home() {
               >
                 Trier par Due Date {sortByDueDate ? "↓" : "↑"}
               </Button>
-
-              {/* Contrôle de filtrage pour les Opened Issues */}
               <FormGroup check>
                 <Input
                   type="checkbox"
@@ -727,9 +736,43 @@ export default function Home() {
                   onChange={() => setFilterOpenedIssues((prev) => !prev)}
                 />
                 <Label check for="filterOpenedIssues">
-                  Afficher les issues ouvertes
+                  Afficher uniquement les issues ouvertes
                 </Label>
               </FormGroup>
+              <Button
+                id="refreshButton"
+                color="link"
+                className="p-0 ms-2"
+                onClick={refreshGanttData}
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  border: "2px solid #6c757d",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.border = "2px solid #FC6D26")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.border = "2px solid #6c757d")
+                }
+              >
+                <FiRefreshCw size={18} color="#6c757d" />
+              </Button>
+              {document.getElementById("refreshButton") && (
+                <Tooltip
+                  placement="bottom"
+                  isOpen={tooltipOpen}
+                  target="refreshButton"
+                  toggle={toggleTooltip}
+                >
+                  Rafraîchir le tableau Gantt
+                </Tooltip>
+              )}
             </div>
 
             {/* Conteneur du Gantt */}
