@@ -14,7 +14,17 @@ import {
   getUserInfo,
 } from "../lib/gitlab";
 import { useRouter } from "next/router";
-import { Button, ButtonGroup, FormGroup, Label, Input , Container, Row, Col, Progress } from "reactstrap";
+import {
+  Button,
+  ButtonGroup,
+  FormGroup,
+  Label,
+  Input,
+  Container,
+  Row,
+  Col,
+  Progress,
+} from "reactstrap";
 import { Gantt, Task as GanttTask, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
 import {
@@ -201,7 +211,7 @@ const ViewSwitcher: FC<ViewSwitcherProps> = ({
         >
           Mois
         </Button>
-       {/*  <Button
+        {/*  <Button
           color="primary"
           onClick={() => onViewModeChange(ViewMode.Year)}
           outline
@@ -300,7 +310,7 @@ const CustomTaskBar: React.FC<CustomTaskBarProps> = ({
       </foreignObject>
     </g>
   );
-}
+};
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -317,6 +327,8 @@ export default function Home() {
   const [isChecked, setIsChecked] = useState(true);
   const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [sortByDueDate, setSortByDueDate] = useState(false);
+  const [filterOpenedIssues, setFilterOpenedIssues] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -456,7 +468,10 @@ export default function Home() {
       ];
     }
 
-    return issues.map((issue) => {
+    // Utilisez les issues triées
+    const sorted = sortedIssues();
+
+    return sorted.map((issue) => {
       const startDate = issue.created_at
         ? parseISO(issue.created_at)
         : monthStart;
@@ -516,12 +531,12 @@ export default function Home() {
     });
   };
 
- let columnWidth = 60; // Augmenté pour le mode jour
- if (view === ViewMode.Month) {
-   columnWidth = 300;
- } else if (view === ViewMode.Week) {
-   columnWidth = 250;
- }
+  let columnWidth = 60; // Augmenté pour le mode jour
+  if (view === ViewMode.Month) {
+    columnWidth = 300;
+  } else if (view === ViewMode.Week) {
+    columnWidth = 250;
+  }
   if (loading) return <div className="loading">Chargement...</div>;
 
   // Légende des couleurs pour le diagramme de Gantt
@@ -530,79 +545,53 @@ export default function Home() {
       <div
         style={{
           display: "flex",
-          justifyContent: "flex-end", // Aligne à droite
-          margin: "20px 20px",
+          justifyContent: "space-around",
+          margin: "20px 0",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center" }}>
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              marginBottom: "8px",
+              width: "20px",
+              height: "20px",
+              backgroundColor: "#FFCCCB",
+              marginRight: "8px",
             }}
-          >
-            <div
-              style={{
-                width: "20px",
-                height: "20px",
-                backgroundColor: "#FFCCCB",
-                marginRight: "8px",
-              }}
-            ></div>
-            <span>En retard</span>
-          </div>
+          ></div>
+          <span>En retard</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              marginBottom: "8px",
+              width: "20px",
+              height: "20px",
+              backgroundColor: "#90EE90",
+              marginRight: "8px",
             }}
-          >
-            <div
-              style={{
-                width: "20px",
-                height: "20px",
-                backgroundColor: "#90EE90",
-                marginRight: "8px",
-              }}
-            ></div>
-            <span>A faire</span>
-          </div>
+          ></div>
+          <span>A faire</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              marginBottom: "8px",
+              width: "20px",
+              height: "20px",
+              backgroundColor: "#007bff",
+              marginRight: "8px",
             }}
-          >
-            <div
-              style={{
-                width: "20px",
-                height: "20px",
-                backgroundColor: "#007bff",
-                marginRight: "8px",
-              }}
-            ></div>
-            <span>En cours</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div
-              style={{
-                width: "20px",
-                height: "20px",
-                backgroundColor: "#F8DB1B",
-                marginRight: "8px",
-              }}
-            ></div>
-            <span>Progression</span>
-          </div>
+          ></div>
+          <span>En cours</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div
+            style={{
+              width: "20px",
+              height: "20px",
+              backgroundColor: "#F8DB1B",
+              marginRight: "8px",
+            }}
+          ></div>
+          <span>Progression</span>
         </div>
       </div>
     );
@@ -622,159 +611,209 @@ export default function Home() {
     </div>
   );
 
+  const sortedIssues = () => {
+    let sorted = [...issues];
+
+    // Tri par Due Date
+    if (sortByDueDate) {
+      sorted.sort((a, b) => {
+        const dueDateA = a.due_date ? parseISO(a.due_date) : new Date(Infinity);
+        const dueDateB = b.due_date ? parseISO(b.due_date) : new Date(Infinity);
+
+        return dueDateA.getTime() - dueDateB.getTime();
+      });
+    }
+
+    // Filtrage pour les Opened Issues
+    if (filterOpenedIssues) {
+      sorted = sorted.filter((issue) => issue.state === "opened");
+    }
+
+    return sorted;
+  };
   return (
     <Container fluid className="vh-100 d-flex flex-column py-4 px-5">
-  <Row className="mb-4">
-    <Col md={6}>
-      {userInfo && <h2 className="h4 mb-3">Bienvenue, {userInfo.name}</h2>}
-    </Col>
-    <Col md={6} className="text-end">
-      <Button color="danger" size="sm" onClick={handleLogout}>
-        Déconnexion
-      </Button>
-    </Col>
-  </Row>
+      <Row className="mb-4 align-items-center">
+        <Col md={6}>
+          {userInfo && <h2 className="h4 mb-0">Bienvenue, {userInfo.name}</h2>}
+        </Col>
+        <Col md={6} className="text-end">
+          <Button color="danger" size="sm" onClick={handleLogout}>
+            Déconnexion
+          </Button>
+        </Col>
+      </Row>
 
-  <Row className="mb-4">
-    <Col>
-      <div className="d-flex align-items-center gap-3">
-        <label className="fw-bold text-muted mb-0" style={{ minWidth: "70px" }}>
-          Projets :
-        </label>
-        <select
-          className="form-select form-select-sm"
-          style={{ width: "300px" }}
-          onChange={(e) => {
-            const project = projects.find(
-              (p) => p.id === parseInt(e.target.value)
-            );
-            if (project) handleProjectChange(project);
-          }}
-          value={selectedProject?.id || ""}
-        >
-          <option value="" disabled>
-            Sélectionner projet
-          </option>
-          {projects.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.name}
-            </option>
-          ))}
-        </select>
-      </div>
-    </Col>
-  </Row>
+      <Row className="mb-4 align-items-center">
+        <Col md={11}>
+          <div className="d-flex align-items-center gap-3">
+            <label className="fw-bold text-muted mb-0">Projets :</label>
 
-  {selectedProject && !issuesLoading && (
-    <Row className="flex-grow-1 bg-light rounded-3 p-3">
-      <Col md={2} className="border-end">
-        <MembersList />
-      </Col>
-      <Col md={10}>
-        <h2 className="h4 mb-3 text-primary">
-          Diagramme de Gantt : {selectedProject.name}
-        </h2>
-        <ViewSwitcher
-          onViewModeChange={(viewMode: ViewMode) => setView(viewMode)}
-          onViewListChange={(isChecked: boolean) => setIsChecked(isChecked)}
-          isChecked={isChecked}
-        />
-        <div className="gantt-container mt-3 bg-white rounded shadow-sm">
-          <Legend />
-          <Gantt
-            tasks={prepareGanttData()}
-            viewMode={view}
-            onDateChange={(task: Task) => {
-              console.log("On date change Id:" + task.id);
-            }}
-            onDelete={(task: Task) => {
-              return window.confirm(
-                `Êtes-vous sûr de vouloir supprimer la tâche "${task.name}" ?`
-              );
-            }}
-            onProgressChange={(task: Task) => {
-              console.log("On progress change Id:" + task.id);
-            }}
-            onDoubleClick={(task: Task) => {
-              alert("On Double Click event Id:" + task.id);
-            }}
-            onSelect={(task: Task, isSelected: boolean) => {
-              console.log(
-                `${task.name} has ${isSelected ? "selected" : "unselected"}`
-              );
-            }}
-            onExpanderClick={(task: Task) => {
-              console.log("On expander click Id:" + task.id);
-            }}
-            listCellWidth={isChecked ? "300px" : ""}
-            columnWidth={columnWidth}
-            ganttHeight={windowDimensions.height * 0.65}
-            headerHeight={60}
-            rowHeight={60}
-            barFill={65}
-            barProgressColor="#007bff"
-            barBackgroundColor="#E0E0E0"
-            handleWidth={8}
-            todayColor="rgba(252,248,227,0.5)"
-            projectProgressColor="#ff9e0d"
-            rtl={false}
-            TooltipContent={(props) => (
-              <CustomTooltipContent
-                {...props}
-                onAssign={handleAssignMember}
-                projectMembers={projectMembers}
+            {/* Sélecteur de projet */}
+            <select
+              className="form-select form-select-sm"
+              style={{ width: "300px" }} // Ajustez la largeur selon vos besoins
+              onChange={(e) => {
+                const project = projects.find(
+                  (p) => p.id === parseInt(e.target.value)
+                );
+                if (project) handleProjectChange(project);
+              }}
+              value={selectedProject?.id || ""}
+            >
+              <option value="" disabled>
+                Sélectionner projet
+              </option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </Col>
+      </Row>
+
+      {selectedProject && !issuesLoading && (
+        <Row className="flex-grow-1 bg-light rounded-3 p-3">
+          <Col md={2} className="border-end">
+            <MembersList />
+          </Col>
+          <Col md={10}>
+            <h2 className="h4 mb-3 text-primary">
+              Diagramme de Gantt : {selectedProject.name}
+            </h2>
+
+            {/* Contrôles supplémentaires */}
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <ViewSwitcher
+                onViewModeChange={(viewMode: ViewMode) => setView(viewMode)}
+                onViewListChange={(isChecked: boolean) =>
+                  setIsChecked(isChecked)
+                }
+                isChecked={isChecked}
               />
-            )}
-            HeaderContent={CustomHeader}
-            locale={ganttLocale}
-            timeStep={86400000}
-            arrowColor="#ccc"
-            fontSize={12}
-            TaskListHeader={CustomGanttHeader}
-            TaskListTable={(props) => (
-              <div>
-                {props.tasks.map((task: Task) => (
-                  <div
-                    key={task.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      height: props.rowHeight,
-                    }}
-                  >
-                    <div style={{ width: props.rowWidth, padding: "0 10px" }}>
-                      {task.name}
-                    </div>
-                    <div style={{ flex: 1, display: "flex" }}>
-                      <div style={{ width: "150px", textAlign: "center" }}>
-                        {formatDate(task.start)}
+              {/* Contrôle de tri par Due Date */}
+              <Button
+                color="primary"
+                size="sm"
+                onClick={() => setSortByDueDate((prev) => !prev)}
+              >
+                Trier par Due Date {sortByDueDate ? "↓" : "↑"}
+              </Button>
+
+              {/* Contrôle de filtrage pour les Opened Issues */}
+              <FormGroup check>
+                <Input
+                  type="checkbox"
+                  id="filterOpenedIssues"
+                  checked={filterOpenedIssues}
+                  onChange={() => setFilterOpenedIssues((prev) => !prev)}
+                />
+                <Label check for="filterOpenedIssues">
+                  Afficher les issues ouvertes
+                </Label>
+              </FormGroup>
+            </div>
+
+            {/* Conteneur du Gantt */}
+            <div className="gantt-container mt-3 bg-white rounded shadow-sm">
+              <Legend />
+              <Gantt
+                tasks={prepareGanttData()}
+                viewMode={view}
+                onDateChange={(task: Task) => {
+                  console.log("On date change Id:" + task.id);
+                }}
+                onDelete={(task: Task) => {
+                  return window.confirm(
+                    `Êtes-vous sûr de vouloir supprimer la tâche "${task.name}" ?`
+                  );
+                }}
+                onProgressChange={(task: Task) => {
+                  console.log("On progress change Id:" + task.id);
+                }}
+                onDoubleClick={(task: Task) => {
+                  alert("On Double Click event Id:" + task.id);
+                }}
+                onSelect={(task: Task, isSelected: boolean) => {
+                  console.log(
+                    `${task.name} has ${isSelected ? "selected" : "unselected"}`
+                  );
+                }}
+                onExpanderClick={(task: Task) => {
+                  console.log("On expander click Id:" + task.id);
+                }}
+                listCellWidth={isChecked ? "300px" : ""}
+                columnWidth={columnWidth}
+                ganttHeight={windowDimensions.height * 0.65}
+                headerHeight={60}
+                rowHeight={60}
+                barFill={65}
+                barProgressColor="#007bff"
+                barBackgroundColor="#E0E0E0"
+                handleWidth={8}
+                todayColor="rgba(252,248,227,0.5)"
+                projectProgressColor="#ff9e0d"
+                rtl={false}
+                TooltipContent={(props) => (
+                  <CustomTooltipContent
+                    {...props}
+                    onAssign={handleAssignMember}
+                    projectMembers={projectMembers}
+                  />
+                )}
+                HeaderContent={CustomHeader}
+                locale={ganttLocale}
+                timeStep={86400000}
+                arrowColor="#ccc"
+                fontSize={12}
+                TaskListHeader={CustomGanttHeader}
+                TaskListTable={(props) => (
+                  <div>
+                    {props.tasks.map((task: Task) => (
+                      <div
+                        key={task.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          height: props.rowHeight,
+                        }}
+                      >
+                        <div
+                          style={{ width: props.rowWidth, padding: "0 10px" }}
+                        >
+                          {task.name}
+                        </div>
+                        <div style={{ flex: 1, display: "flex" }}>
+                          <div style={{ width: "150px", textAlign: "center" }}>
+                            {formatDate(task.start)}
+                          </div>
+                          <div style={{ width: "150px", textAlign: "center" }}>
+                            {formatDate(task.end)}
+                          </div>
+                          <div style={{ width: "200px", textAlign: "center" }}>
+                            <AssigneeProfile assignee={task.assignee} />
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ width: "150px", textAlign: "center" }}>
-                        {formatDate(task.end)}
-                      </div>
-                      <div style={{ width: "200px", textAlign: "center" }}>
-                        <AssigneeProfile assignee={task.assignee} />
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-            TaskBar={CustomTaskBar}
-          />
+                )}
+                TaskBar={CustomTaskBar}
+              />
+            </div>
+          </Col>
+        </Row>
+      )}
+
+      {issuesLoading && (
+        <div className="loading position-absolute top-50 start-50 translate-middle">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Chargement ...</span>
+          </div>
         </div>
-      </Col>
-    </Row>
-  )}
-
-  {issuesLoading && (
-    <div className="loading position-absolute top-50 start-50 translate-middle">
-      <div className="spinner-border text-primary" role="status">
-        <span className="visually-hidden">Chargement ...</span>
-      </div>
-    </div>
-  )}
-</Container>
-
+      )}
+    </Container>
   );
 }
