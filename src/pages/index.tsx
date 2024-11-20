@@ -634,11 +634,27 @@ export default function Home() {
   return (
     <Container fluid className="vh-100 d-flex flex-column py-4 px-5">
       <Row className="mb-4 align-items-center">
-        <Col md={6}>
+        <Col md={4}>
           {userInfo && <h2 className="h4 mb-0">Bienvenue, {userInfo.name}</h2>}
         </Col>
-        <Col md={6} className="text-end">
-          <Button color="danger" size="sm" onClick={handleLogout}>
+        <Col
+          md={4}
+          className="text-center d-flex align-items-center justify-content-center"
+        >
+          <Image
+            src="https://about.gitlab.com/images/press/logo/svg/gitlab-icon-rgb.svg"
+            alt="GitLab"
+            width={30}
+            height={30}
+            className="me-2"
+            style={{ filter: "grayscale(100%)" }}
+          />
+          <span className="text-secondary">
+            {localStorage.getItem("gitlab_url")}
+          </span>
+        </Col>
+        <Col md={4} className="text-end">
+          <Button color="outline-secondary" size="sm" onClick={handleLogout}>
             Déconnexion
           </Button>
         </Col>
