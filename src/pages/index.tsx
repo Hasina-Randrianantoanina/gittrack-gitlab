@@ -489,26 +489,36 @@ export default function Home() {
 
       // Calcul du pourcentage de progression
       let progress = 0;
-      if (issue.time_stats.time_estimate > 0) {
-        progress = Math.min(
-          100,
-          (issue.time_stats.total_time_spent / issue.time_stats.time_estimate) *
-            100
-        );
-      } else if (issue.state === "closed") {
-        progress = 100;
-      } else {
-        const totalDuration = endDate.getTime() - startDate.getTime();
-        const elapsedDuration = today.getTime() - startDate.getTime();
-        progress = Math.min(100, (elapsedDuration / totalDuration) * 100);
+      if (!isNotStarted) {
+        if (issue.time_stats.time_estimate > 0) {
+          progress = Math.min(
+            100,
+            (issue.time_stats.total_time_spent /
+              issue.time_stats.time_estimate) *
+              100
+          );
+        } else if (issue.state === "closed") {
+          progress = 100;
+        } else {
+          const totalDuration = endDate.getTime() - startDate.getTime();
+          const elapsedDuration = today.getTime() - startDate.getTime();
+          progress = Math.min(100, (elapsedDuration / totalDuration) * 100);
+        }
       }
+
+      const roundedProgress = Math.round(progress);
+
+      // Inclure le pourcentage dans le nom de la tâche
+      const taskName = isNotStarted
+        ? issue.title
+        : `${issue.title} (${roundedProgress}%)`;
 
       return {
         id: issue.iid.toString(),
-        name: issue.title,
+        name: taskName,
         start: startDate,
         end: endDate,
-        progress: Math.round(progress), // Arrondi à l'entier le plus proche
+        progress: roundedProgress,
         type: "task",
         project: selectedProject?.name || "",
         assignee:
@@ -523,14 +533,14 @@ export default function Home() {
             ? "#FFCCCB"
             : isNotStarted
             ? "#90EE90"
-            : "#007bff",
+            : "#0D6EFD",
           backgroundSelectedColor: isOverdue
             ? "#FF6961"
             : isNotStarted
             ? "#32CD32"
             : "#0056b3",
-          progressColor: "#F8DB1B", // Couleur de la barre de progression
-          progressSelectedColor: "#FACA22", // Couleur de la barre de progression lorsque sélectionnée
+          progressColor: "#F8DB1B",
+          progressSelectedColor: "#FACA22",
         },
       };
     });
@@ -581,7 +591,7 @@ export default function Home() {
             style={{
               width: "20px",
               height: "20px",
-              backgroundColor: "#007bff",
+              backgroundColor: "#0D6EFD",
               marginRight: "8px",
             }}
           ></div>
@@ -809,7 +819,7 @@ export default function Home() {
                 headerHeight={60}
                 rowHeight={60}
                 barFill={65}
-                barProgressColor="#007bff"
+                barProgressColor="#0D6EFD"
                 barBackgroundColor="#E0E0E0"
                 handleWidth={8}
                 todayColor="rgba(252,248,227,0.5)"
