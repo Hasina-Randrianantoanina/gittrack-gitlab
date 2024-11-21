@@ -39,6 +39,7 @@ import {
 import { fr } from "date-fns/locale";
 import Image from "next/image";
 import { FiRefreshCw } from "react-icons/fi";
+import { FaSortUp, FaSortDown } from "react-icons/fa"; 
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 
@@ -732,11 +733,23 @@ export default function Home() {
                 isChecked={isChecked}
               />
               <Button
-                color="primary"
+                style={{
+                  backgroundColor: "transparent", // Couleur de fond transparente
+                  color: "#333", // Couleur du texte
+                  border: "1px solid #f8f4e3", // Bordure beige clair pour le bouton
+                  transition: "background-color 0.3s ease", // Transition douce pour l'effet de survol
+                }}
                 size="sm"
                 onClick={() => setSortByDueDate((prev) => !prev)}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#f8f4e3")
+                } // Couleur beige clair au survol
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                } // Retour à transparent lorsque le curseur quitte
               >
-                Trier par Due Date {sortByDueDate ? "↓" : "↑"}
+                Trier par Due Date{" "}
+                {sortByDueDate ? <FaSortDown /> : <FaSortUp />}
               </Button>
               <FormGroup check>
                 <Input
