@@ -39,7 +39,7 @@ import {
 import { fr } from "date-fns/locale";
 import Image from "next/image";
 import { FiRefreshCw } from "react-icons/fi";
-import { FaSortUp, FaSortDown } from "react-icons/fa"; 
+import { FaSortUp, FaSortDown } from "react-icons/fa";
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 
@@ -774,15 +774,17 @@ export default function Home() {
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
-                  border: "2px solid #6c757d",
+                  border: "2px solid #f8f4e3",
                   transition: "all 0.3s ease",
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.border = "2px solid #FC6D26")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.border = "2px solid #6c757d")
-                }
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.border = "2px solid #f8f4e3";
+                  e.currentTarget.style.backgroundColor = "#f8f4e3"; // Fond beige clair au survol
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.border = "2px solid #f8f4e3"; // Bordure grise au retour
+                  e.currentTarget.style.backgroundColor = "transparent"; // Retour à transparent
+                }}
               >
                 <FiRefreshCw size={18} color="#6c757d" />
               </Button>
