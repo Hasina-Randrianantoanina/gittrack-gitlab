@@ -37,8 +37,8 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import Image from "next/image";
-import { FiRefreshCw } from "react-icons/fi";
-import { FaSortUp, FaSortDown } from "react-icons/fa";
+import { FiRefreshCw} from "react-icons/fi";
+import { FaSortUp, FaSortDown, FaClipboardList } from "react-icons/fa";
 import Link from "next/link"; 
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
@@ -223,9 +223,10 @@ export default function Home() {
   const [sortByDueDate, setSortByDueDate] = useState(false);
   const [filterOpenedIssues, setFilterOpenedIssues] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [reportTooltipOpen, setReportTooltipOpen] = useState(false);
 
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
-
+  const toggleReportTooltip = () => setReportTooltipOpen(!reportTooltipOpen);
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -603,15 +604,6 @@ export default function Home() {
         </Col>
       </Row>
 
-      {/* Lien vers la page de rapport */}
-      <Row className="mb-4">
-        <Col>
-          <Link href="/report">
-            <Button color="primary">Voir les rapports</Button>
-          </Link>
-        </Col>
-      </Row>
-
       {selectedProject && !issuesLoading && (
         <Row className="flex-grow-1 bg-light rounded-3 p-3">
           <Col md={2} className="border-end">
@@ -661,42 +653,63 @@ export default function Home() {
                   Afficher uniquement les issues ouvertes
                 </Label>
               </FormGroup>
-              <Button
-                id="refreshButton"
-                color="link"
-                className="p-0 ms-2"
-                onClick={refreshGanttData}
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  border: "2px solid #f8f4e3",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.border = "2px solid #f8f4e3";
-                  e.currentTarget.style.backgroundColor = "#f8f4e3"; // Fond beige clair au survol
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.border = "2px solid #f8f4e3"; // Bordure grise au retour
-                  e.currentTarget.style.backgroundColor = "transparent"; // Retour à transparent
-                }}
-              >
-                <FiRefreshCw size={18} color="#6c757d" />
-              </Button>
-              {document.getElementById("refreshButton") && (
-                <Tooltip
-                  placement="bottom"
-                  isOpen={tooltipOpen}
-                  target="refreshButton"
-                  toggle={toggleTooltip}
-                >
-                  Rafraîchir le tableau Gantt
-                </Tooltip>
-              )}
+              <Row className="mb-4">
+                <Col>
+                  <div className="d-flex align-items-center">
+                    <Button
+                      id="refreshButton"
+                      color="link"
+                      className="p-0 ms-2"
+                      onClick={refreshGanttData}
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        border: "2px solid #f8f4e3",
+                        transition: "all 0.3s ease",
+                      }}
+                      onMouseEnter={toggleTooltip}
+                      onMouseLeave={toggleTooltip}
+                    >
+                      <FiRefreshCw size={18} color="#6c757d" />
+                    </Button>
+                    {document.getElementById("refreshButton") && (
+                      <Tooltip
+                        placement="bottom"
+                        isOpen={tooltipOpen}
+                        target="refreshButton"
+                        toggle={toggleTooltip}
+                      >
+                        Rafraîchir le tableau Gantt
+                      </Tooltip>
+                    )}
+
+                    <Link href="/report" passHref>
+                      <FaClipboardList
+                        id="reportIcon"
+                        size={18}
+                        color="#6c757d"
+                        style={{ cursor: "pointer", marginLeft: "10px" }} // Ajout d'un espace entre les icônes
+                        onMouseEnter={toggleReportTooltip}
+                        onMouseLeave={toggleReportTooltip}
+                      />
+                    </Link>
+                    {document.getElementById("refreshButton") && (
+                      <Tooltip
+                        placement="bottom"
+                        isOpen={reportTooltipOpen}
+                        target="reportIcon"
+                        toggle={toggleReportTooltip}
+                      >
+                        Accéder aux rapports détaillés
+                      </Tooltip>
+                    )}
+                  </div>
+                </Col>
+              </Row>
             </div>
 
             {/* Conteneur du Gantt */}
