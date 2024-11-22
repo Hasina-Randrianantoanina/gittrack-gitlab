@@ -18,6 +18,7 @@ import {
 } from "../lib/gitlab";
 import { Container, Row, Col, Table, Button} from "reactstrap";
 import { FiEye } from "react-icons/fi";
+import { FaInfoCircle } from "react-icons/fa";
 
 const ReportPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -118,7 +119,7 @@ const ReportPage = () => {
         <Col md={4}>
           <h2 className="h5">Projets</h2>
           <div className="table-responsive">
-            <Table striped>
+            <Table hover>
               <thead>
                 <tr>
                   <th>Nom du Projet</th>
@@ -143,7 +144,7 @@ const ReportPage = () => {
                     <td>{project.name}</td>
                     <td>
                       <Button
-                        color="primary"
+                        color={activeRow === project.id ? "success" : "primary"} // Change la couleur du bouton si la ligne est active
                         onClick={(e) => {
                           e.stopPropagation(); // Empêche le clic sur le bouton de déclencher l'événement de ligne
                           fetchIssuesAndDetails(project.id);
@@ -155,8 +156,22 @@ const ReportPage = () => {
                           padding: "0.5rem 1rem", // Ajustez le padding pour un look professionnel
                         }}
                       >
-                        <FiEye size={18} style={{ marginRight: "5px" }} />
-                        Voir les problèmes et détails
+                        {/* Affichez une icône différente selon l'état */}
+                        {activeRow === project.id ? (
+                          <>
+                            <FaInfoCircle
+                              size={18}
+                              style={{ marginRight: "5px" }}
+                            />
+                            {project.name} {/* Affiche le nom du projet */}
+                          </>
+                        ) : (
+                          <>
+                            <FiEye size={18} style={{ marginRight: "5px" }} />
+                            Voir les problèmes et détails{" "}
+                            {/* Texte par défaut */}
+                          </>
+                        )}
                       </Button>
                     </td>
                   </tr>
