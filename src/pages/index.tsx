@@ -1,7 +1,7 @@
 // src/pages/index.tsx
 "use client";
 
-import React, { useEffect, useState, FC, CSSProperties } from "react";
+import React, { useEffect, useState, FC} from "react";
 import {
   getProjects,
   Project,
@@ -23,7 +23,6 @@ import {
   Container,
   Row,
   Col,
-  Progress,
   Tooltip,
 } from "reactstrap";
 import { Gantt, Task as GanttTask, ViewMode } from "gantt-task-react";
@@ -40,6 +39,7 @@ import { fr } from "date-fns/locale";
 import Image from "next/image";
 import { FiRefreshCw } from "react-icons/fi";
 import { FaSortUp, FaSortDown } from "react-icons/fa";
+import Link from "next/link"; 
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 
@@ -92,39 +92,6 @@ const CustomTooltipContent: FC<CustomTooltipProps> = ({
       <div>
         <strong>Assignée à:</strong> {task.assignee?.name || "Aucun"}
       </div>
-    </div>
-  );
-};
-
-interface HeaderProps {
-  headerHeight: number;
-  headerWidth: number;
-  scrollY: number;
-}
-
-const CustomHeader: FC<HeaderProps> = ({
-  headerHeight,
-  headerWidth,
-  scrollY,
-}) => {
-  const style: React.CSSProperties = {
-    height: headerHeight,
-    width: headerWidth,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    transform: `translateY(${scrollY}px)`,
-  };
-
-  const date = new Date();
-  const dayName = format(date, "EEE", { locale: fr }); // Nom du jour abrégé
-  const dayNumber = format(date, "d");
-
-  return (
-    <div style={style}>
-      <div style={{ fontSize: "0.8em", marginBottom: "2px" }}>{dayName}</div>
-      <div style={{ fontWeight: "bold" }}>{dayNumber}</div>
     </div>
   );
 };
@@ -235,83 +202,6 @@ const ViewSwitcher: FC<ViewSwitcherProps> = ({
         </Label>
       </FormGroup>
     </div>
-  );
-};
-
-interface CustomTaskBarProps {
-  task: Task & {
-    styles?: {
-      progressColor?: string;
-      progressSelectedColor?: string;
-    };
-  };
-  isSelected: boolean;
-  onMouseDown: (event: React.MouseEvent<SVGGElement, MouseEvent>) => void;
-  onMouseUp: (event: React.MouseEvent<SVGGElement, MouseEvent>) => void;
-  onMouseEnter: (event: React.MouseEvent<SVGGElement, MouseEvent>) => void;
-  onMouseLeave: (event: React.MouseEvent<SVGGElement, MouseEvent>) => void;
-  style: CSSProperties & {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-  barCornerRadius: number;
-}
-
-const CustomTaskBar: React.FC<CustomTaskBarProps> = ({
-  task,
-  isSelected,
-  onMouseDown,
-  onMouseUp,
-  onMouseEnter,
-  onMouseLeave,
-  style,
-  barCornerRadius,
-}) => {
-  const progressColor = isSelected
-    ? task.styles?.progressSelectedColor || "#F8DB1B"
-    : task.styles?.progressColor || "#F8DB1B";
-
-  return (
-    <g
-      onMouseDown={onMouseDown}
-      onMouseUp={onMouseUp}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      <foreignObject
-        x={style.x}
-        y={style.y}
-        width={style.width}
-        height={style.height}
-      >
-        <div style={{ width: "100%", height: "100%", position: "relative" }}>
-          <Progress
-            value={task.progress}
-            style={{
-              height: "100%",
-              backgroundColor: style.backgroundColor as string,
-              borderRadius: `${barCornerRadius}px`,
-            }}
-            color={progressColor}
-          >
-            <span
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                color: "black",
-                fontSize: "12px",
-              }}
-            >
-              {`${task.progress}%`}
-            </span>
-          </Progress>
-        </div>
-      </foreignObject>
-    </g>
   );
 };
 
@@ -531,16 +421,16 @@ export default function Home() {
             : undefined,
         styles: {
           backgroundColor: isOverdue
-            ? "#FFCCCB"
+            ? "#ff0000"
             : isNotStarted
-            ? "#90EE90"
+            ? "#c1c5c9"
             : "#0D6EFD",
           backgroundSelectedColor: isOverdue
             ? "#FF6961"
             : isNotStarted
             ? "#32CD32"
             : "#0056b3",
-          progressColor: "#F8DB1B",
+          progressColor: "#008040",
           progressSelectedColor: "#FACA22",
         },
       };
@@ -570,7 +460,7 @@ export default function Home() {
             style={{
               width: "20px",
               height: "20px",
-              backgroundColor: "#FFCCCB",
+              backgroundColor: "#ff0000",
               marginRight: "8px",
             }}
           ></div>
@@ -581,7 +471,7 @@ export default function Home() {
             style={{
               width: "20px",
               height: "20px",
-              backgroundColor: "#90EE90",
+              backgroundColor: "#c1c5c9",
               marginRight: "8px",
             }}
           ></div>
@@ -603,7 +493,7 @@ export default function Home() {
             style={{
               width: "20px",
               height: "20px",
-              backgroundColor: "#F8DB1B",
+              backgroundColor: "#008040",
               marginRight: "8px",
             }}
           ></div>
@@ -710,6 +600,15 @@ export default function Home() {
               ))}
             </select>
           </div>
+        </Col>
+      </Row>
+
+      {/* Lien vers la page de rapport */}
+      <Row className="mb-4">
+        <Col>
+          <Link href="/report">
+            <Button color="primary">Voir les rapports</Button>
+          </Link>
         </Col>
       </Row>
 
@@ -847,11 +746,10 @@ export default function Home() {
                     projectMembers={projectMembers}
                   />
                 )}
-                HeaderContent={CustomHeader}
                 locale={ganttLocale}
                 timeStep={86400000}
                 arrowColor="#ccc"
-                fontSize={12}
+                fontSize="12px"
                 TaskListHeader={CustomGanttHeader}
                 TaskListTable={(props) => (
                   <div>
@@ -884,7 +782,6 @@ export default function Home() {
                     ))}
                   </div>
                 )}
-                TaskBar={CustomTaskBar}
               />
             </div>
           </Col>

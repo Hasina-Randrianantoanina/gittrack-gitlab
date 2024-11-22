@@ -1,6 +1,6 @@
 // app/projects/[id]/page.tsx
+import { getProjectIssues } from "@/lib/gitlab";
 import { Container, ListGroup } from "react-bootstrap";
-import { getProjectIssues } from "../../../lib/gitlab";
 
 export default async function ProjectPage({
   params,
