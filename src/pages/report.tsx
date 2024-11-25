@@ -18,9 +18,11 @@ import {
 } from "../lib/gitlab";
 import { Container, Row, Col, Table, Button} from "reactstrap";
 import { FiEye } from "react-icons/fi";
-import { FaInfoCircle } from "react-icons/fa";
+import { FaArrowLeft, FaInfoCircle } from "react-icons/fa";
+import { useRouter } from "next/router";
 
 const ReportPage = () => {
+  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,12 +111,27 @@ const ReportPage = () => {
       fetchIssuesAndDetails(projectId); // Appelle la fonction pour récupérer les détails
     };
 
-   if (loading) return <div>Chargement...</div>;
+   if (loading) return (
+      <div className="loading position-absolute top-50 start-50 translate-middle">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Chargement ...</span>
+        </div>
+      </div>
+    );
 
   return (
     <Container fluid>
-      <h1 className="text-left my-4">Rapports</h1>
-
+      {/* Bouton de retour */}
+      <div className="d-flex justify-content-start my-3">
+        <Button
+          color="secondary"
+          onClick={() => router.push("/")} // Utilisation de router.push pour rediriger
+          className="d-flex align-items-center"
+        >
+          <FaArrowLeft className="me-2" /> Retour 
+        </Button>
+      </div>
+      <h1 className="text-left my-4">Rapports des activités</h1>
       <Row>
         {/* Colonne des projets */}
         <Col xs={12} md={4} className="mb-4">
