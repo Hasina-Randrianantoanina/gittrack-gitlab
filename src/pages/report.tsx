@@ -116,7 +116,8 @@ const ReportPage = () => {
       <h1 className="text-left my-4">Rapports</h1>
 
       <Row>
-        <Col md={4}>
+        {/* Colonne des projets */}
+        <Col xs={12} md={4} className="mb-4">
           <h2 className="h5">Projets</h2>
           <div className="table-responsive">
             <Table hover>
@@ -150,26 +151,17 @@ const ReportPage = () => {
                           fetchIssuesAndDetails(project.id);
                           setActiveRow(project.id); // Met à jour l'état avec l'ID du projet cliqué
                         }}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          padding: "0.5rem 1rem", // Ajustez le padding pour un look professionnel
-                        }}
+                        className="d-flex align-items-center px-2 py-1"
                       >
-                        {/* Affichez une icône différente selon l'état */}
                         {activeRow === project.id ? (
                           <>
-                            <FaInfoCircle
-                              size={18}
-                              style={{ marginRight: "5px" }}
-                            />
+                            <FaInfoCircle size={18} className="me-2" />
                             {project.name} {/* Affiche le nom du projet */}
                           </>
                         ) : (
                           <>
-                            <FiEye size={18} style={{ marginRight: "5px" }} />
-                            Voir les problèmes et détails{" "}
-                            {/* Texte par défaut */}
+                            <FiEye size={18} className="me-2" />
+                            Voir
                           </>
                         )}
                       </Button>
@@ -181,7 +173,8 @@ const ReportPage = () => {
           </div>
         </Col>
 
-        <Col md={8}>
+        {/* Colonne des détails */}
+        <Col xs={12} md={8}>
           {projectDetails && (
             <>
               <h2 className="h5">Détails du Projet</h2>
@@ -200,10 +193,10 @@ const ReportPage = () => {
             </>
           )}
 
-          {/* Issues du Projet */}
+          {/* Issues */}
           <h2 className="h5">Issues du Projet</h2>
-          {issues.length > 0 ? (
-            <div className="table-responsive">
+          <div className="table-responsive">
+            {issues.length > 0 ? (
               <Table striped>
                 <thead>
                   <tr>
@@ -218,23 +211,21 @@ const ReportPage = () => {
                     <tr key={issue.id}>
                       <td>{issue.title}</td>
                       <td>{issue.state}</td>
-                      <td>
-                        {issue.assignee ? issue.assignee.name : "Non assigné"}
-                      </td>
+                      <td>{issue.assignee?.name || "Non assigné"}</td>
                       <td>{new Date(issue.created_at).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>
               </Table>
-            </div>
-          ) : (
-            <p>Aucun problème trouvé pour ce projet.</p>
-          )}
+            ) : (
+              <p>Aucun problème trouvé pour ce projet.</p>
+            )}
+          </div>
 
-          {/* Milestones Associés */}
+          {/* Milestones */}
           <h2 className="h5">Milestones Associés</h2>
-          {milestones.length > 0 ? (
-            <div className="table-responsive">
+          <div className="table-responsive">
+            {milestones.length > 0 ? (
               <Table striped>
                 <thead>
                   <tr>
@@ -257,24 +248,22 @@ const ReportPage = () => {
                   ))}
                 </tbody>
               </Table>
-            </div>
-          ) : (
-            <p>Aucun jalon trouvé.</p>
-          )}
+            ) : (
+              <p>Aucun jalon trouvé.</p>
+            )}
+          </div>
 
-          {/* Labels des Issues */}
+          {/* Labels */}
           <h2 className="h5">Labels des Issues</h2>
-          {labels.length > 0 ? (
-            <ul className="list-unstyled">
-              {labels.map((label) => (
-                <li key={label.id}>{label.name}</li>
-              ))}
-            </ul>
-          ) : (
-            <p>Aucun label trouvé.</p>
-          )}
+          <ul className="list-unstyled">
+            {labels.length > 0 ? (
+              labels.map((label) => <li key={label.id}>{label.name}</li>)
+            ) : (
+              <p>Aucun label trouvé.</p>
+            )}
+          </ul>
 
-          {/* Statistiques des Issues */}
+          {/* Statistiques */}
           <h2 className="h5">Statistiques des Issues</h2>
           {issuesStatistics && (
             <div className="table-responsive">
@@ -297,10 +286,10 @@ const ReportPage = () => {
             </div>
           )}
 
-          {/* Détails des Utilisateurs Assignés */}
+          {/* Utilisateurs assignés */}
           <h2 className="h5">Détails des Utilisateurs Assignés</h2>
-          {Object.keys(userDetails).length > 0 ? (
-            <div className="table-responsive">
+          <div className="table-responsive">
+            {Object.keys(userDetails).length > 0 ? (
               <Table striped>
                 <thead>
                   <tr>
@@ -310,23 +299,30 @@ const ReportPage = () => {
                     <th>Email</th>
                   </tr>
                 </thead>
-                {/* Corps du tableau */}
-                {/* Ajoutez ici le corps du tableau comme précédemment */}
+                <tbody>
+                  {Object.values(userDetails).map((user) => (
+                    <tr key={user.id}>
+                      <td>{user.id}</td>
+                      <td>{user.name}</td>
+                      <td>{user.username}</td>
+                      <td>{user.email}</td>
+                    </tr>
+                  ))}
+                </tbody>
               </Table>
-            </div>
-          ) : (
-            // Message si aucun utilisateur n'est trouvé
-            <>Aucune utilisateur assigné trouvé.</>
-          )}
+            ) : (
+              <p>Aucun utilisateur assigné trouvé.</p>
+            )}
+          </div>
 
           {/* Historique des Activités */}
           {/* Nouvelle section pour afficher les événements */}
           <h2 className="h5">Historique des Activités</h2>
-          {events.length > 0 ? (
-            <div className="table-responsive">
+          <div className="table-responsive">
+            {events.length > 0 ? (
               <Table striped>
                 <thead>
-                  {/* En-têtes de colonne pour l'historique des activités */}
+                  {/* En-têtes de colonne pour l'historique des activités */}{" "}
                   <tr>
                     <th>Date</th>
                     <th>Action</th>
@@ -336,27 +332,29 @@ const ReportPage = () => {
                 {/* Corps du tableau pour afficher les événements */}
                 {/* Ajoutez ici le corps du tableau comme précédemment */}
                 {/* Exemple de corps de tableau pour les événements */}
-                {events.map((event) => (
-                  <tr key={event.id}>
-                    {/* Assurez-vous que la structure de l'événement contient ces propriétés */}
-                    <td>{new Date(event.created_at).toLocaleDateString()}</td>
-                    {/* Affichez l'action ou le nom de l'événement */}
-                    <td>{event.action_name}</td>
-                    {/* Remplacez par le nom réel de l'auteur si disponible */}
-                    {/* Utilisez l'option de sécurité pour accéder à l'auteur */}
-                    {/* Vérifiez si l'auteur est défini avant d'accéder à son nom */}
-                    {/* Si event.author est un objet avec une propriété name */}
-                    {/* Vous pouvez également vérifier si author existe avant d'accéder à name */}
-                    {/* Si author n'est pas un objet ou si name n'existe pas, affichez "Inconnu" */}
-                    <td>{event.author?.name || "Inconnu"}</td>
-                  </tr>
-                ))}
+                <tbody>
+                  {events.map((event) => (
+                    <tr key={event.id}>
+                      {/* Assurez-vous que la structure de l'événement contient ces propriétés */}{" "}
+                      <td>{new Date(event.created_at).toLocaleDateString()}</td>
+                      {/* Affichez l'action ou le nom de l'événement */}{" "}
+                      <td>{event.action_name}</td>
+                      {/* Remplacez par le nom réel de l'auteur si disponible */}
+                      {/* Utilisez l'option de sécurité pour accéder à l'auteur */}
+                      {/* Vérifiez si l'auteur est défini avant d'accéder à son nom */}
+                      {/* Si event.author est un objet avec une propriété name */}
+                      {/* Vous pouvez également vérifier si author existe avant d'accéder à name */}
+                      {/* Si author n'est pas un objet ou si name n'existe pas, affichez "Inconnu" */}{" "}
+                      <td>{event.author?.name || "Inconnu"}</td>
+                    </tr>
+                  ))}
+                </tbody>
               </Table>
-            </div>
-          ) : (
-            // Message si aucun événement n'est trouvé
-            <>Aucune activité trouvée.</>
-          )}
+            ) : (
+              // Message si aucun événement n'est trouvé
+              <p>Aucune activité trouvée.</p>
+            )}
+          </div>
         </Col>
       </Row>
     </Container>
