@@ -405,7 +405,7 @@ const ReportPage = () => {
           <h2 className="h5">Milestones Associés</h2>
           <div className="table-responsive">
             {milestones.length > 0 ? (
-              <Table striped>
+              <Table striped bordered hover>
                 <thead>
                   <tr>
                     <th>Titre</th>
@@ -446,7 +446,7 @@ const ReportPage = () => {
           <h2 className="h5">Statistiques des Issues</h2>
           {issuesStatistics && (
             <div className="table-responsive">
-              <Table striped>
+              <Table striped bordered hover>
                 <thead>
                   <tr>
                     <th>Total</th>
@@ -469,7 +469,7 @@ const ReportPage = () => {
           <h2 className="h5">Détails des Utilisateurs Assignés</h2>
           <div className="table-responsive">
             {Object.keys(userDetails).length > 0 ? (
-              <Table striped>
+              <Table striped bordered hover>
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -499,7 +499,7 @@ const ReportPage = () => {
           <h2 className="h5">Historique des Activités</h2>
           <div className="table-responsive">
             {events.length > 0 ? (
-              <Table striped>
+              <Table striped bordered hover>
                 <thead>
                   {/* En-têtes de colonne pour l'historique des activités */}{" "}
                   <tr>
