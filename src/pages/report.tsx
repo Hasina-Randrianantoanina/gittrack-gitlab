@@ -16,7 +16,7 @@ import {
   IssuesStatistics, // Assurez-vous d'importer vos types définis
   Event, // Assurez-vous d'importer vos types définis
 } from "../lib/gitlab";
-import { Container, Row, Col, Table, Button} from "reactstrap";
+import { Container, Row, Col, Table, Button, Input} from "reactstrap";
 import { FiEye } from "react-icons/fi";
 import { FaArrowLeft, FaInfoCircle } from "react-icons/fa";
 import { useRouter } from "next/router";
@@ -111,6 +111,25 @@ const ReportPage = () => {
       fetchIssuesAndDetails(projectId); // Appelle la fonction pour récupérer les détails
     };
 
+    /**Filtres par colone dans Issue de projet */
+    const [titleFilter, setTitleFilter] = useState("");
+    const [stateFilter, setStateFilter] = useState("");
+    const [assigneeFilter, setAssigneeFilter] = useState("");
+    const [labelFilter, setLabelFilter] = useState("");
+
+    const filteredIssues = issues.filter(
+      (issue) =>
+        issue.title.toLowerCase().includes(titleFilter.toLowerCase()) &&
+        issue.state.toLowerCase().includes(stateFilter.toLowerCase()) &&
+        (issue.assignee?.name.toLowerCase() || "").includes(
+          assigneeFilter.toLowerCase()
+        ) &&
+        issue.labels.some((label) =>
+          label.toLowerCase().includes(labelFilter.toLowerCase())
+        )
+    );
+    /**Fin filtres par colonne dans Issue de projet */
+
    if (loading) return (
       <div className="loading position-absolute top-50 start-50 translate-middle">
         <div className="spinner-border text-primary" role="status">
@@ -128,7 +147,7 @@ const ReportPage = () => {
           onClick={() => router.push("/")} // Utilisation de router.push pour rediriger
           className="d-flex align-items-center"
         >
-          <FaArrowLeft className="me-2" /> Retour 
+          <FaArrowLeft className="me-2" /> Retour
         </Button>
       </div>
       <h1 className="text-left my-4">Rapports des activités</h1>
@@ -211,32 +230,175 @@ const ReportPage = () => {
           )}
 
           {/* Issues */}
-          <h2 className="h5">Issues du Projet</h2>
-          <div className="table-responsive">
-            {issues.length > 0 ? (
-              <Table striped>
-                <thead>
-                  <tr>
-                    <th>Titre</th>
-                    <th>État</th>
-                    <th>Assigné à</th>
-                    <th>Date de création</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {issues.map((issue) => (
-                    <tr key={issue.id}>
-                      <td>{issue.title}</td>
-                      <td>{issue.state}</td>
-                      <td>{issue.assignee?.name || "Non assigné"}</td>
-                      <td>{new Date(issue.created_at).toLocaleDateString()}</td>
+          <div className="report-page">
+            <h2 className="h5 mb-3">Issues du Projet</h2>
+            <div className="table-responsive">
+              {issues.length > 0 ? (
+                <Table striped bordered hover>
+                  <thead className="table-header">
+                    <tr>
+                      <th className="text-center">
+                        Titre
+                        <Input
+                          type="text"
+                          placeholder="Filtrer"
+                          value={titleFilter}
+                          onChange={(e) => setTitleFilter(e.target.value)}
+                          className="filter-input mt-2"
+                        />
+                      </th>
+                      <th className="text-center">
+                        État
+                        <Input
+                          type="text"
+                          placeholder="Filtrer"
+                          value={stateFilter}
+                          onChange={(e) => setStateFilter(e.target.value)}
+                          className="filter-input mt-2"
+                        />
+                      </th>
+                      <th className="text-center">
+                        Assigné à
+                        <Input
+                          type="text"
+                          placeholder="Filtrer"
+                          value={assigneeFilter}
+                          onChange={(e) => setAssigneeFilter(e.target.value)}
+                          className="filter-input mt-2"
+                        />
+                      </th>
+                      <th className="text-center align-middle">
+                        Date de création
+                      </th>
+                      <th className="text-center align-middle">
+                        Date d&apos;échéance
+                      </th>
+                      <th className="text-center align-middle">Temps estimé</th>
+                      <th className="text-center align-middle">Temps passé</th>
+                      <th className="text-center align-middle">
+                        Écart de temps
+                      </th>
+                      <th className="text-center align-middle">
+                        % de temps réalisé
+                      </th>
+                      <th className="text-center">
+                        Étiquettes
+                        <Input
+                          type="text"
+                          placeholder="Filtrer"
+                          value={labelFilter}
+                          onChange={(e) => setLabelFilter(e.target.value)}
+                          className="filter-input mt-2"
+                        />
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
-            ) : (
-              <p>Aucun problème trouvé pour ce projet.</p>
-            )}
+                  </thead>
+                  <tbody>
+                    {filteredIssues.map((issue) => {
+                      const timeEstimate = issue.time_stats.time_estimate;
+                      const timeSpent = issue.time_stats.total_time_spent;
+                      const percentComplete =
+                        timeEstimate > 0
+                          ? Math.min(100, (timeSpent / timeEstimate) * 100)
+                          : 0;
+
+                      return (
+                        <tr key={issue.id}>
+                          <td>{issue.title}</td>
+                          <td>{issue.state}</td>
+                          <td>{issue.assignee?.name || "Non assigné"}</td>
+                          <td>
+                            {new Date(issue.created_at).toLocaleDateString()}
+                          </td>
+                          <td>
+                            {issue.due_date
+                              ? new Date(issue.due_date).toLocaleDateString()
+                              : "Pas de date"}
+                          </td>
+                          <td>{(timeEstimate / 3600).toFixed(2)}h</td>
+                          <td>{(timeSpent / 3600).toFixed(2)}h</td>
+                          <td>
+                            {((timeEstimate - timeSpent) / 3600).toFixed(2)}h
+                          </td>
+                          <td>{percentComplete.toFixed(2)}%</td>
+                          <td>{issue.labels.join(", ")}</td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="table-info">
+                      <td colSpan={5}>
+                        <strong>Total cumulé</strong>
+                      </td>
+                      <td>
+                        <strong>
+                          {(
+                            filteredIssues.reduce(
+                              (sum, issue) =>
+                                sum + issue.time_stats.time_estimate,
+                              0
+                            ) / 3600
+                          ).toFixed(2)}
+                          h
+                        </strong>
+                      </td>
+                      <td>
+                        <strong>
+                          {(
+                            filteredIssues.reduce(
+                              (sum, issue) =>
+                                sum + issue.time_stats.total_time_spent,
+                              0
+                            ) / 3600
+                          ).toFixed(2)}
+                          h
+                        </strong>
+                      </td>
+                      <td>
+                        <strong>
+                          {(
+                            (filteredIssues.reduce(
+                              (sum, issue) =>
+                                sum + issue.time_stats.time_estimate,
+                              0
+                            ) -
+                              filteredIssues.reduce(
+                                (sum, issue) =>
+                                  sum + issue.time_stats.total_time_spent,
+                                0
+                              )) /
+                            3600
+                          ).toFixed(2)}
+                          h
+                        </strong>
+                      </td>
+                      <td>
+                        <strong>
+                          {(
+                            filteredIssues.reduce(
+                              (sum, issue) =>
+                                sum +
+                                (issue.time_stats.time_estimate > 0
+                                  ? Math.min(
+                                      100,
+                                      (issue.time_stats.total_time_spent /
+                                        issue.time_stats.time_estimate) *
+                                        100
+                                    )
+                                  : 0),
+                              0
+                            ) / filteredIssues.length
+                          ).toFixed(2)}
+                          %
+                        </strong>
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </Table>
+              ) : (
+                <p>Aucun problème trouvé pour ce projet.</p>
+              )}
+            </div>
           </div>
 
           {/* Milestones */}
