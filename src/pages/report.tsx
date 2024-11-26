@@ -213,10 +213,12 @@ const ReportPage = () => {
         <Col xs={12} md={8}>
           {projectDetails && (
             <>
-              <h2 className="h5">Détails du Projet</h2>
-              <p>
+              <h2 className="h5">
+                Détails du Projet : <strong>{projectDetails.name}</strong>
+              </h2>
+              {/* <p>
                 <strong>Nom :</strong> {projectDetails.name}
-              </p>
+              </p> */}
               <p>
                 <strong>Description :</strong> {projectDetails.description}
               </p>
@@ -305,7 +307,13 @@ const ReportPage = () => {
                       return (
                         <tr key={issue.id}>
                           <td>{issue.title}</td>
-                          <td>{issue.state}</td>
+                          <td>
+                            {issue.state === "opened"
+                              ? "Ouverte"
+                              : issue.state === "closed"
+                              ? "Fermée"
+                              : issue.state}
+                          </td>
                           <td>{issue.assignee?.name || "Non assigné"}</td>
                           <td>
                             {new Date(issue.created_at).toLocaleDateString()}
