@@ -504,19 +504,41 @@ export default function Home() {
     );
   };
 
-  const MembersList = () => (
-    <div>
-      <h3>Membres du projet</h3>
-      <ul>
-        {projectMembers.map((member) => (
-          <li key={member.id}>
-            {member.name} - {getRole(member.access_level)}
-            {selectedProject?.creator_id === member.id && " (Créateur)"}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  const MembersList = () => {
+    const isActiveMember = (member: ProjectMember) => {
+      const isAssigned = issues.some((issue) =>
+        issue.assignees.some((assignee) => assignee.id === member.id)
+      );
+
+      const isOwnerOrCreator =
+        member.access_level === 50 || selectedProject?.creator_id === member.id;
+
+      return isAssigned || isOwnerOrCreator;
+    };
+
+    return (
+      <div>
+        <h3>Membres du projet</h3>
+        <ul>
+          {projectMembers.map((member) => (
+            <li
+              key={member.id}
+              className={isActiveMember(member) ? "" : "inactive"}
+            >
+              {member.name} - {getRole(member.access_level)}
+              {selectedProject?.creator_id === member.id && " (Créateur)"}
+            </li>
+          ))}
+        </ul>
+        <style jsx>{`
+          .inactive {
+            color: gray; /* Change la couleur du texte des utilisateurs inactifs */
+            opacity: 0.6; /* Optionnel : rend le texte plus transparent */
+          }
+        `}</style>
+      </div>
+    );
+  };
 
   const sortedIssues = () => {
     let sorted = [...issues];
