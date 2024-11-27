@@ -39,6 +39,7 @@ export interface Project {
   avatar_url?: string | null;
   forks_count?: number;
   star_count?: number;
+  open_issues_count?: number; // Ajoutez cette ligne
   last_activity_at?: string;
   namespace?: {
     id: number;
@@ -358,6 +359,42 @@ export const getProjectEvents = async (projectId: number): Promise<Event[]> => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching events for project ID ${projectId}:`, error);
+    throw error;
+  }
+};
+
+// In src/lib/gitlab.ts
+export interface MergeRequest {
+  id: number;
+  iid: number;
+  project_id: number;
+  title: string;
+  description: string;
+  state: string;
+  created_at: string;
+  updated_at: string;
+  merge_status: string;
+  merge_when_pipeline_succeeds?: boolean;
+  // Add other necessary properties
+}
+
+const getToken = (): string => {
+  return process.env.NEXT_PUBLIC_GITLAB_ACCESS_TOKEN || "";
+};
+
+export const getProjectMergeRequests = async (
+  projectId: number
+): Promise<MergeRequest[]> => {
+  try {
+    const response = await axios.get(
+      `${gitlabApiUrl}/projects/${projectId}/merge_requests`,
+      {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des merge requests:", error);
     throw error;
   }
 };

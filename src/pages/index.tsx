@@ -38,7 +38,12 @@ import {
 import { fr } from "date-fns/locale";
 import Image from "next/image";
 import { FiRefreshCw} from "react-icons/fi";
-import { FaSortUp, FaSortDown, FaClipboardList } from "react-icons/fa";
+import {
+  FaSortUp,
+  FaSortDown,
+  FaClipboardList,
+  FaChartBar,
+} from "react-icons/fa";
 import Link from "next/link"; 
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
@@ -224,9 +229,13 @@ export default function Home() {
   const [filterOpenedIssues, setFilterOpenedIssues] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [reportTooltipOpen, setReportTooltipOpen] = useState(false);
+  const [overviewTooltipOpen, setOverviewTooltipOpen] = useState(false);
 
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
   const toggleReportTooltip = () => setReportTooltipOpen(!reportTooltipOpen);
+  const toggleOverviewTooltip = () =>
+    setOverviewTooltipOpen(!overviewTooltipOpen);
+
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -714,12 +723,24 @@ export default function Home() {
                         id="reportIcon"
                         size={18}
                         color="#6c757d"
-                        style={{ cursor: "pointer", marginLeft: "10px" }} // Ajout d'un espace entre les icônes
+                        style={{ cursor: "pointer", marginLeft: "10px" }}
                         onMouseEnter={toggleReportTooltip}
                         onMouseLeave={toggleReportTooltip}
                       />
                     </Link>
-                    {document.getElementById("refreshButton") && (
+
+                    <Link href="/overview" passHref>
+                      <FaChartBar
+                        id="overviewIcon"
+                        size={18}
+                        color="#6c757d"
+                        style={{ cursor: "pointer", marginLeft: "10px" }}
+                        onMouseEnter={toggleOverviewTooltip}
+                        onMouseLeave={toggleOverviewTooltip}
+                      />
+                    </Link>
+
+                    {document.getElementById("reportIcon") && (
                       <Tooltip
                         placement="bottom"
                         isOpen={reportTooltipOpen}
@@ -727,6 +748,17 @@ export default function Home() {
                         toggle={toggleReportTooltip}
                       >
                         Accéder aux rapports détaillés
+                      </Tooltip>
+                    )}
+
+                    {document.getElementById("overviewIcon") && (
+                      <Tooltip
+                        placement="bottom"
+                        isOpen={overviewTooltipOpen}
+                        target="overviewIcon"
+                        toggle={toggleOverviewTooltip}
+                      >
+                        Voir la vue d&apos;ensemble
                       </Tooltip>
                     )}
                   </div>
