@@ -1,0 +1,62 @@
+export enum Role {
+  Guest = "guest",
+  Reporter = "reporter",
+  Developer = "developer",
+  Maintainer = "maintainer",
+  Owner = "owner",
+  Administrator = "administrator",
+}
+
+export const permissions = {
+  [Role.Guest]: [
+    "read_public_issues",
+    "read_public_snippets",
+    "create_issues",
+    "comment_discussions",
+    "view_public_pipelines",
+    "clone_public_repos",
+    "view_member_list",
+  ],
+  [Role.Reporter]: [
+    "clone_download_repo",
+    "read_repo_files",
+    "read_pipelines",
+    "access_metrics",
+    "view_all_issues_mr",
+    "manage_labels_milestones",
+  ],
+  [Role.Developer]: [
+    "push_branches",
+    "create_edit_mr",
+    "restart_cancel_pipelines",
+    "create_snippets",
+    "manage_artifacts",
+    "add_tags",
+  ],
+  [Role.Maintainer]: [
+    "manage_protected_branches",
+    "delete_archive_project",
+    "manage_pipelines",
+    "configure_integrations",
+    "manage_ssh_keys",
+    "delete_branches_tags",
+    "modify_project_settings",
+    "manage_project_members",
+  ],
+  [Role.Owner]: [
+    "transfer_projects",
+    "manage_group_roles",
+    "delete_groups_projects",
+    "access_billing",
+    "configure_group_policies",
+    "access_advanced_admin",
+  ],
+  [Role.Administrator]: [
+    "delete_users_projects",
+    "modify_global_settings",
+    "access_all_data",
+    "manage_backups",
+    "view_all_metrics",
+    "configure_global_policies",
+  ],
+};

@@ -20,6 +20,7 @@ import { Container, Row, Col, Table, Button, Input} from "reactstrap";
 import { FiEye } from "react-icons/fi";
 import { FaArrowLeft, FaInfoCircle } from "react-icons/fa";
 import { useRouter } from "next/router";
+import withPermission from "@/components/withPermission";
 
 const ReportPage = () => {
   const router = useRouter();
@@ -548,4 +549,6 @@ const ReportPage = () => {
   );
 };
 
-export default ReportPage;
+// export default ReportPage;
+export default withPermission(ReportPage, "read_public_issues");
+// export default withPermission(ReportPage, "view_all_issues_mr");

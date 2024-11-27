@@ -1,5 +1,6 @@
 // lib/gitlab.ts
 import axios from "axios";
+import { Role } from "./roles";
 
 const gitlabApiUrl = process.env.NEXT_PUBLIC_GITLAB_API_URL;
 const gitlabAccessToken = process.env.NEXT_PUBLIC_GITLAB_ACCESS_TOKEN;
@@ -232,16 +233,43 @@ export interface UserInfo {
   username: string;
   email: string;
   avatar_url: string;
+  role: Role;
 }
 
 export const getUserInfo = async (): Promise<UserInfo> => {
   try {
-    console.log("Fetching user information from:", `${gitlabApiUrl}/user`);
-    const response = await gitlabApi.get("/user");
-    return response.data;
+    const response = await axios.get(`${gitlabApiUrl}/user`, {
+      headers: {
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_GITLAB_ACCESS_TOKEN}`,
+      },
+    });
+
+    const userInfo = response.data;
+
+    // Mappez le niveau d'accès à un rôle
+    userInfo.role = mapGitLabAccessLevelToRole(userInfo.access_level);
+
+    return userInfo;
   } catch (error) {
     console.error("Error fetching user information:", error);
     throw error;
+  }
+};
+
+const mapGitLabAccessLevelToRole = (accessLevel: number): Role => {
+  switch (accessLevel) {
+    case 10:
+      return Role.Guest;
+    case 20:
+      return Role.Reporter;
+    case 30:
+      return Role.Developer;
+    case 40:
+      return Role.Maintainer;
+    case 50:
+      return Role.Owner;
+    default:
+      return Role.Guest; // Par défaut, renvoyez Guest
   }
 };
 
