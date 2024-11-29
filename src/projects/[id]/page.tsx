@@ -7,7 +7,13 @@ export default async function ProjectPage({
 }: {
   params: { id: string };
 }) {
-  const issues = await getProjectIssues(parseInt(params.id));
+   const token = localStorage.getItem("gitlab_token");
+   const url = localStorage.getItem("gitlab_url");
+   if (!token || !url) {
+     throw new Error("Token or URL not defined");
+   }
+   console.log("Fetching user info from:", url);
+  const issues = await getProjectIssues(parseInt(params.id), url, token);
 
   return (
     <Container>
