@@ -33,7 +33,13 @@ const OverviewPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const projectsData = await getProjects();
+        const token = localStorage.getItem("gitlab_token");
+        const url = localStorage.getItem("gitlab_url");
+        if (!token || !url) {
+          throw new Error("Token or URL not defined");
+        }
+        console.log("Fetching user info from:", url);
+        const projectsData = await getProjects(url, token);
         setProjects(projectsData);
 
         const allIssues: Issue[] = [];
@@ -42,8 +48,8 @@ const OverviewPage: React.FC = () => {
         await Promise.all(
           projectsData.map(async (project) => {
             const [projectIssues, projectMRs] = await Promise.all([
-              getProjectIssues(project.id),
-              getProjectMergeRequests(project.id),
+              getProjectIssues(project.id, url, token),
+              getProjectMergeRequests(project.id, url, token),
             ]);
             allIssues.push(...projectIssues);
             allMergeRequests.push(...projectMRs);

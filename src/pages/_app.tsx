@@ -10,7 +10,8 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     const token = localStorage.getItem("gitlab_token");
-    if (!token && router.pathname !== "/login") {
+    const gitlabUrl = localStorage.getItem("gitlab_url");
+    if (!token || (!gitlabUrl && router.pathname !== "/login")) {
       router.push("/login"); // Rediriger vers la page de connexion si non authentifié
     }
   }, [router]);

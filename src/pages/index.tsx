@@ -10,8 +10,6 @@ import {
   getProjectMembers,
   ProjectMember,
   assignMemberToIssue,
-  UserInfo,
-  getUserInfo,
 } from "../lib/gitlab";
 import { useRouter } from "next/router";
 import {
@@ -45,6 +43,7 @@ import {
   FaChartBar,
 } from "react-icons/fa";
 import Link from "next/link"; 
+import { useUserInfo } from "@/hooks/useUserInfo";
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 
@@ -224,7 +223,7 @@ export default function Home() {
   const [view, setView] = useState<ViewMode>(ViewMode.Day);
   const [isChecked, setIsChecked] = useState(true);
   const router = useRouter();
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const { userInfo} = useUserInfo();
   const [sortByDueDate, setSortByDueDate] = useState(false);
   const [filterOpenedIssues, setFilterOpenedIssues] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
@@ -239,7 +238,12 @@ export default function Home() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const data = await getProjects();
+        const token = localStorage.getItem("gitlab_token");
+        const url = localStorage.getItem("gitlab_url");
+        if (!token || !url) {
+          throw new Error("Token or URL not defined");
+        }
+        const data = await getProjects(url, token);
         setProjects(data);
         if (data.length > 0) {
           setSelectedProject(data[0]);
@@ -261,11 +265,17 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userInfoData = await getUserInfo();
-        setUserInfo(userInfoData);
+         const token = localStorage.getItem("gitlab_token");
+         const url = localStorage.getItem("gitlab_url");
+         if (!token || !url) {
+           throw new Error("Token or URL not defined");
+         }
+         console.log("Fetching user info from:", url);
+        // const userInfoData = await getUserInfo(url, token);
+        // setUserInfo(userInfoData);
 
         // Le reste de votre code pour récupérer les projets, etc.
-        const projectsData = await getProjects();
+        const projectsData = await getProjects(url, token);
         setProjects(projectsData);
         if (projectsData.length > 0) {
           setSelectedProject(projectsData[0]);
@@ -294,9 +304,15 @@ export default function Home() {
   const fetchIssues = async (projectId: number) => {
     setIssuesLoading(true);
     try {
+      const token = localStorage.getItem("gitlab_token");
+      const url = localStorage.getItem("gitlab_url");
+      if (!token || !url) {
+        throw new Error("Token or URL not defined");
+      }
+      console.log("Fetching user info from:", url);
       const [issuesData, membersData] = await Promise.all([
-        getProjectIssues(projectId),
-        getProjectMembers(projectId),
+        getProjectIssues(projectId, url, token),
+        getProjectMembers(projectId, url, token),
       ]);
       setIssues(issuesData);
       setProjectMembers(membersData);
@@ -346,7 +362,19 @@ export default function Home() {
   const handleAssignMember = async (issueIid: string, userId: number) => {
     if (!selectedProject) return;
     try {
-      await assignMemberToIssue(selectedProject.id, parseInt(issueIid), userId);
+      const token = localStorage.getItem("gitlab_token");
+      const url = localStorage.getItem("gitlab_url");
+      if (!token || !url) {
+        throw new Error("Token or URL not defined");
+      }
+      console.log("Fetching user info from:", url);
+      await assignMemberToIssue(
+        selectedProject.id,
+        parseInt(issueIid),
+        userId,
+        url,
+        token
+      );
       fetchIssues(selectedProject.id);
     } catch (error) {
       console.error("Erreur lors de l'assignation du membre:", error);

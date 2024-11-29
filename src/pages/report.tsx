@@ -40,7 +40,13 @@ const ReportPage = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const data = await getProjects();
+         const token = localStorage.getItem("gitlab_token");
+         const url = localStorage.getItem("gitlab_url");
+         if (!token || !url) {
+           throw new Error("Token or URL not defined");
+         }
+         console.log("Fetching user info from:", url);
+        const data = await getProjects(url, token);
         setProjects(data);
       } catch (error) {
         console.error("Erreur lors de la récupération des projets:", error);
@@ -55,28 +61,38 @@ const ReportPage = () => {
   const fetchIssuesAndDetails = async (projectId: number) => {
     setLoading(true);
     try {
+      const token = localStorage.getItem("gitlab_token");
+      const url = localStorage.getItem("gitlab_url");
+      if (!token || !url) {
+        throw new Error("Token or URL not defined");
+      }
+      console.log("Fetching user info from:", url);
       // Récupérer les issues du projet
-      const data = await getProjectIssues(projectId);
+      const data = await getProjectIssues(projectId, url, token);
       setIssues(data);
 
       // Récupérer les détails du projet
-      const details = await getProjectDetails(projectId);
+      const details = await getProjectDetails(projectId, url, token);
       setProjectDetails(details);
 
       // Récupérer les jalons associés
-      const milestonesData = await getProjectMilestones(projectId);
+      const milestonesData = await getProjectMilestones(projectId, url, token);
       setMilestones(milestonesData);
 
       // Récupérer les labels associés
-      const labelsData = await getProjectLabels(projectId);
+      const labelsData = await getProjectLabels(projectId, url, token);
       setLabels(labelsData); // Assurez-vous que labelsData est un tableau d'objets avec id et name
 
       // Récupérer les statistiques des issues
-      const statisticsData = await getProjectIssuesStatistics(projectId);
+      const statisticsData = await getProjectIssuesStatistics(
+        projectId,
+        url,
+        token
+      );
       setIssuesStatistics(statisticsData);
 
       // Récupérer l'historique des activités
-      const eventsData = await getProjectEvents(projectId);
+      const eventsData = await getProjectEvents(projectId, url, token);
       setEvents(eventsData);
 
       // Récupérer les IDs des utilisateurs assignés
@@ -86,7 +102,9 @@ const ReportPage = () => {
       const uniqueUserIds = Array.from(new Set(userIds));
 
       // Récupérer les détails des utilisateurs assignés
-      const userPromises = uniqueUserIds.map((id) => fetchUserById(id));
+      const userPromises = uniqueUserIds.map((id) =>
+        fetchUserById(id, url, token)
+      );
       const users = await Promise.all(userPromises);
       const userMap = users.reduce((acc, user) => {
         acc[user.id] = user;
