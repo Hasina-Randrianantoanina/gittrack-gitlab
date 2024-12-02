@@ -229,6 +229,9 @@ export default function Home() {
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [reportTooltipOpen, setReportTooltipOpen] = useState(false);
   const [overviewTooltipOpen, setOverviewTooltipOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    null
+  );
 
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
   const toggleReportTooltip = () => setReportTooltipOpen(!reportTooltipOpen);
@@ -241,13 +244,15 @@ export default function Home() {
         const token = localStorage.getItem("gitlab_token");
         const url = localStorage.getItem("gitlab_url");
         if (!token || !url) {
-          throw new Error("Token or URL not defined");
+          // Rediriger vers la page de connexion si le token ou l'URL ne sont pas définis
+          router.push("/login");
+          return;
         }
         const data = await getProjects(url, token);
         setProjects(data);
         if (data.length > 0) {
           setSelectedProject(data[0]);
-          fetchIssues(data[0].id);
+          handleProjectClick(data[0].id);
         }
       } catch (error) {
         console.error("Échec de la récupération des projets:", error);
@@ -268,7 +273,9 @@ export default function Home() {
          const token = localStorage.getItem("gitlab_token");
          const url = localStorage.getItem("gitlab_url");
          if (!token || !url) {
-           throw new Error("Token or URL not defined");
+           // Rediriger vers la page de connexion si le token ou l'URL ne sont pas définis
+           router.push("/login");
+           return;
          }
          console.log("Fetching user info from:", url);
         // const userInfoData = await getUserInfo(url, token);
@@ -279,7 +286,7 @@ export default function Home() {
         setProjects(projectsData);
         if (projectsData.length > 0) {
           setSelectedProject(projectsData[0]);
-          fetchIssues(projectsData[0].id);
+          handleProjectClick(projectsData[0].id);
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des données:", error);
@@ -301,31 +308,43 @@ export default function Home() {
     });
   };
 
-  const fetchIssues = async (projectId: number) => {
-    setIssuesLoading(true);
-    try {
-      const token = localStorage.getItem("gitlab_token");
-      const url = localStorage.getItem("gitlab_url");
-      if (!token || !url) {
-        throw new Error("Token or URL not defined");
+  useEffect(() => {
+    const fetchIssues = async (projectId: number) => {
+      setIssuesLoading(true);
+      try {
+        const token = localStorage.getItem("gitlab_token");
+        const url = localStorage.getItem("gitlab_url");
+        if (!token || !url) {
+          // Rediriger vers la page de connexion si le token ou l'URL ne sont pas définis
+          router.push("/login");
+          return;
+        }
+        console.log("Fetching user info from:", url);
+        const [issuesData, membersData] = await Promise.all([
+          getProjectIssues(projectId, url, token),
+          getProjectMembers(projectId, url, token),
+        ]);
+        setIssues(issuesData);
+        setProjectMembers(membersData);
+      } catch (error) {
+        console.error(
+          "Échec de la récupération des problèmes ou des membres:",
+          error
+        );
+        setIssues([]);
+        setProjectMembers([]);
+      } finally {
+        setIssuesLoading(false);
       }
-      console.log("Fetching user info from:", url);
-      const [issuesData, membersData] = await Promise.all([
-        getProjectIssues(projectId, url, token),
-        getProjectMembers(projectId, url, token),
-      ]);
-      setIssues(issuesData);
-      setProjectMembers(membersData);
-    } catch (error) {
-      console.error(
-        "Échec de la récupération des problèmes ou des membres:",
-        error
-      );
-      setIssues([]);
-      setProjectMembers([]);
-    } finally {
-      setIssuesLoading(false);
+    };
+
+    if (selectedProjectId) {
+      fetchIssues(selectedProjectId);
     }
+  }, [selectedProjectId]);
+
+  const handleProjectClick = (projectId: number) => {
+    setSelectedProjectId(projectId);
   };
 
   // fonction pour convertir le niveau d'accès en rôle
@@ -356,7 +375,7 @@ export default function Home() {
 
   const handleProjectChange = (project: Project) => {
     setSelectedProject(project);
-    fetchIssues(project.id);
+    handleProjectClick(project.id);
   };
 
   const handleAssignMember = async (issueIid: string, userId: number) => {
@@ -365,7 +384,9 @@ export default function Home() {
       const token = localStorage.getItem("gitlab_token");
       const url = localStorage.getItem("gitlab_url");
       if (!token || !url) {
-        throw new Error("Token or URL not defined");
+        // Rediriger vers la page de connexion si le token ou l'URL ne sont pas définis
+        router.push("/login");
+        return;
       }
       console.log("Fetching user info from:", url);
       await assignMemberToIssue(
@@ -375,7 +396,7 @@ export default function Home() {
         url,
         token
       );
-      fetchIssues(selectedProject.id);
+      handleProjectClick(selectedProject.id);
     } catch (error) {
       console.error("Erreur lors de l'assignation du membre:", error);
     }
@@ -600,7 +621,7 @@ export default function Home() {
 
   const refreshGanttData = () => {
     if (selectedProject) {
-      fetchIssues(selectedProject.id);
+      handleProjectClick(selectedProject.id);
     }
   };
 

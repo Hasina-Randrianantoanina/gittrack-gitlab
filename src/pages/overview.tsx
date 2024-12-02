@@ -36,7 +36,9 @@ const OverviewPage: React.FC = () => {
         const token = localStorage.getItem("gitlab_token");
         const url = localStorage.getItem("gitlab_url");
         if (!token || !url) {
-          throw new Error("Token or URL not defined");
+          // Rediriger vers la page de connexion si le token ou l'URL ne sont pas définis
+          router.push("/login");
+          return;
         }
         console.log("Fetching user info from:", url);
         const projectsData = await getProjects(url, token);

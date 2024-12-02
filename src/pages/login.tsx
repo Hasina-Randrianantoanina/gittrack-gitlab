@@ -27,7 +27,7 @@ const LoginPage = () => {
         });
 
         // Si la requête réussit, stockez le token et redirigez
-        if (response.status === 200) {
+        if (response.status === 200 && typeof window !== "undefined") {
           localStorage.setItem("gitlab_token", token); // Stocker le token
           localStorage.setItem("gitlab_url", gitlabUrl); // Stocker l'URL de l'instance
           router.push("/"); // Rediriger vers la page d'accueil après la connexion
@@ -74,8 +74,7 @@ const LoginPage = () => {
           <Alert color="danger" className="mt-3">
             {error}
           </Alert>
-        )}{" "}
-        {/* Afficher les erreurs */}
+        )}
       </Form>
     </Container>
   );

@@ -9,10 +9,17 @@ function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   useEffect(() => {
+    // Vérifiez si localStorage est accessible
+    if (typeof window === "undefined") return;
+
     const token = localStorage.getItem("gitlab_token");
     const gitlabUrl = localStorage.getItem("gitlab_url");
+
     if (!token || (!gitlabUrl && router.pathname !== "/login")) {
-      router.push("/login"); // Rediriger vers la page de connexion si non authentifié
+      // Ajoutez une vérification pour éviter les boucles infinies
+      if (router.pathname !== "/login") {
+        router.push("/login"); // Rediriger vers la page de connexion si non authentifié
+      }
     }
   }, [router]);
 

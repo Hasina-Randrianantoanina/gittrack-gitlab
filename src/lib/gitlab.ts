@@ -2,8 +2,10 @@
 import axios from "axios";
 import { Role } from "./roles";
 
-// Fonction pour créer l'instance Axios avec les paramètres donnés
 const createGitlabApi = (gitlabApiUrl: string, gitlabAccessToken: string) => {
+  if (!gitlabApiUrl.startsWith("https://")) {
+    throw new Error("GITLAB_API_URL must use HTTPS");
+  }
   return axios.create({
     baseURL: gitlabApiUrl + "/api/v4",
     headers: {

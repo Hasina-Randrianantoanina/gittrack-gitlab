@@ -27,7 +27,9 @@ const ReportPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userDetails, setUserDetails] = useState<{ [key: number]: UserInfo }>({} );
+  const [userDetails, setUserDetails] = useState<{ [key: number]: UserInfo }>(
+    {}
+  );
 
   // Nouveaux états pour stocker les détails supplémentaires
   const [projectDetails, setProjectDetails] = useState<Project | null>(null);
@@ -36,16 +38,29 @@ const ReportPage = () => {
   const [issuesStatistics, setIssuesStatistics] =
     useState<IssuesStatistics | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
+   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+     null
+   );
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-         const token = localStorage.getItem("gitlab_token");
-         const url = localStorage.getItem("gitlab_url");
-         if (!token || !url) {
-           throw new Error("Token or URL not defined");
-         }
-         console.log("Fetching user info from:", url);
+        if (typeof window === "undefined") return;
+
+        const token = localStorage.getItem("gitlab_token");
+        const url = localStorage.getItem("gitlab_url");
+
+        if (!token || !url) {
+          router.push("/login");
+          return;
+        }
+
+        // Vérifiez que l'URL commence par HTTPS
+        if (!url.startsWith("https://")) {
+          throw new Error("GITLAB_API_URL must use HTTPS");
+        }
+
+        console.log("Fetching user info from:", url);
         const data = await getProjects(url, token);
         setProjects(data);
       } catch (error) {
@@ -58,98 +73,124 @@ const ReportPage = () => {
     fetchProjects();
   }, []);
 
-  const fetchIssuesAndDetails = async (projectId: number) => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("gitlab_token");
-      const url = localStorage.getItem("gitlab_url");
-      if (!token || !url) {
-        throw new Error("Token or URL not defined");
+  // Effet pour récupérer les détails du projet sélectionné
+  useEffect(() => {
+    const fetchIssuesAndDetails = async () => {
+      if (!selectedProjectId) return;
+
+      try {
+        if (typeof window === "undefined") return;
+
+        const token = localStorage.getItem("gitlab_token");
+        const url = localStorage.getItem("gitlab_url");
+
+        if (!token || !url) {
+          router.push("/login");
+          return;
+        }
+
+        if (!url.startsWith("https://")) {
+          throw new Error("GITLAB_API_URL must use HTTPS");
+        }
+
+        // Récupérer les issues du projet
+        const data = await getProjectIssues(selectedProjectId, url, token);
+        setIssues(data);
+
+        // Récupérer les détails du projet
+        const details = await getProjectDetails(selectedProjectId, url, token);
+        setProjectDetails(details);
+
+        // Récupérer les jalons associés
+        const milestonesData = await getProjectMilestones(
+          selectedProjectId,
+          url,
+          token
+        );
+        setMilestones(milestonesData);
+
+        // Récupérer les labels associés
+        const labelsData = await getProjectLabels(
+          selectedProjectId,
+          url,
+          token
+        );
+        setLabels(labelsData);
+
+        // Récupérer les statistiques des issues
+        const statisticsData = await getProjectIssuesStatistics(
+          selectedProjectId,
+          url,
+          token
+        );
+        setIssuesStatistics(statisticsData);
+
+        // Récupérer l'historique des activités
+        const eventsData = await getProjectEvents(
+          selectedProjectId,
+          url,
+          token
+        );
+        setEvents(eventsData);
+
+        // Récupérer les IDs des utilisateurs assignés
+        const userIds = data.flatMap((issue) =>
+          issue.assignees.map((assignee) => assignee.id)
+        );
+        const uniqueUserIds = Array.from(new Set(userIds));
+
+        // Récupérer les détails des utilisateurs assignés
+        const userPromises = uniqueUserIds.map((id) =>
+          fetchUserById(id, url, token)
+        );
+        const users = await Promise.all(userPromises);
+        const userMap = users.reduce((acc, user) => {
+          acc[user.id] = user;
+          return acc;
+        }, {} as { [key: number]: UserInfo });
+        setUserDetails(userMap);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des issues et détails:",
+          error
+        );
+      } finally {
+        setLoading(false);
       }
-      console.log("Fetching user info from:", url);
-      // Récupérer les issues du projet
-      const data = await getProjectIssues(projectId, url, token);
-      setIssues(data);
-
-      // Récupérer les détails du projet
-      const details = await getProjectDetails(projectId, url, token);
-      setProjectDetails(details);
-
-      // Récupérer les jalons associés
-      const milestonesData = await getProjectMilestones(projectId, url, token);
-      setMilestones(milestonesData);
-
-      // Récupérer les labels associés
-      const labelsData = await getProjectLabels(projectId, url, token);
-      setLabels(labelsData); // Assurez-vous que labelsData est un tableau d'objets avec id et name
-
-      // Récupérer les statistiques des issues
-      const statisticsData = await getProjectIssuesStatistics(
-        projectId,
-        url,
-        token
-      );
-      setIssuesStatistics(statisticsData);
-
-      // Récupérer l'historique des activités
-      const eventsData = await getProjectEvents(projectId, url, token);
-      setEvents(eventsData);
-
-      // Récupérer les IDs des utilisateurs assignés
-      const userIds = data.flatMap((issue) =>
-        issue.assignees.map((assignee) => assignee.id)
-      );
-      const uniqueUserIds = Array.from(new Set(userIds));
-
-      // Récupérer les détails des utilisateurs assignés
-      const userPromises = uniqueUserIds.map((id) =>
-        fetchUserById(id, url, token)
-      );
-      const users = await Promise.all(userPromises);
-      const userMap = users.reduce((acc, user) => {
-        acc[user.id] = user;
-        return acc;
-      }, {} as { [key: number]: UserInfo });
-
-      setUserDetails(userMap);
-    } catch (error) {
-      console.error(
-        "Erreur lors de la récupération des issues et détails:",
-        error
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-    const [activeRow, setActiveRow] = useState<number | null>(null); // État pour suivre la ligne active
-    const [hoveredRow, setHoveredRow] = useState<number | null>(null); // État pour suivre la ligne survolée
-
-    const handleRowClick = (projectId: number) => {
-      setActiveRow(projectId); // Met à jour l'état avec l'ID du projet cliqué
-      fetchIssuesAndDetails(projectId); // Appelle la fonction pour récupérer les détails
     };
 
-    /**Filtres par colone dans Issue de projet */
-    const [titleFilter, setTitleFilter] = useState("");
-    const [stateFilter, setStateFilter] = useState("");
-    const [assigneeFilter, setAssigneeFilter] = useState("");
-    const [labelFilter, setLabelFilter] = useState("");
+    fetchIssuesAndDetails();
+  }, [selectedProjectId]);
 
-    const filteredIssues = issues.filter(
-      (issue) =>
-        issue.title.toLowerCase().includes(titleFilter.toLowerCase()) &&
-        issue.state.toLowerCase().includes(stateFilter.toLowerCase()) &&
-        (issue.assignee?.name.toLowerCase() || "").includes(
-          assigneeFilter.toLowerCase()
-        ) &&
-        issue.labels.some((label) =>
-          label.toLowerCase().includes(labelFilter.toLowerCase())
-        )
-    );
-    /**Fin filtres par colonne dans Issue de projet */
+  const [activeRow, setActiveRow] = useState<number | null>(null); // État pour suivre la ligne active
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null); // État pour suivre la ligne survolée
 
-   if (loading) return (
+  const handleRowClick = (projectId: number) => {
+    setActiveRow(projectId); // Met à jour l'état avec l'ID du projet cliqué
+    setSelectedProjectId(projectId); // Appelle la fonction pour récupérer les détails
+  };
+
+  /**Filtres par colone dans Issue de projet */
+  const [titleFilter, setTitleFilter] = useState("");
+  const [stateFilter, setStateFilter] = useState("");
+  const [assigneeFilter, setAssigneeFilter] = useState("");
+  const [labelFilter, setLabelFilter] = useState("");
+
+  const filteredIssues = issues.filter(
+    (issue) =>
+      issue.title.toLowerCase().includes(titleFilter.toLowerCase()) &&
+      issue.state.toLowerCase().includes(stateFilter.toLowerCase()) &&
+      (issue.assignee?.name.toLowerCase() || "").includes(
+        assigneeFilter.toLowerCase()
+      ) &&
+      issue.labels.some((label) =>
+        label.toLowerCase().includes(labelFilter.toLowerCase())
+      )
+  );
+  /**Fin filtres par colonne dans Issue de projet */
+
+  if (loading)
+    return (
       <div className="loading position-absolute top-50 start-50 translate-middle">
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Chargement ...</span>
@@ -203,7 +244,7 @@ const ReportPage = () => {
                         color={activeRow === project.id ? "success" : "primary"} // Change la couleur du bouton si la ligne est active
                         onClick={(e) => {
                           e.stopPropagation(); // Empêche le clic sur le bouton de déclencher l'événement de ligne
-                          fetchIssuesAndDetails(project.id);
+                          handleRowClick(project.id);
                           setActiveRow(project.id); // Met à jour l'état avec l'ID du projet cliqué
                         }}
                         className="d-flex align-items-center px-2 py-1"
