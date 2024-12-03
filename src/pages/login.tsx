@@ -16,11 +16,20 @@ const LoginPage = () => {
   const [token, setToken] = useState("");
   const [gitlabUrl, setGitlabUrl] = useState(""); // État pour l'URL de l'instance GitLab
   const [error, setError] = useState("");
+  const [supportUrl, setSupportUrl] = useState("https://git.soa.mg/"); // État pour l'URL de support
   const router = useRouter();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // Empêche le rechargement de la page
     if (token && gitlabUrl) {
       try {
+        // Vérifiez que l'URL commence par HTTPS
+        if (!gitlabUrl.startsWith("https://")) {
+          throw new Error(
+            "L'URL de l'instance GitLab doit commencer par https://"
+          );
+        }
+
         // Vérifiez l'URL de l'instance GitLab avec le token
         const response = await axios.get(`${gitlabUrl}/api/v4/user`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -34,48 +43,82 @@ const LoginPage = () => {
         }
       } catch (err) {
         console.log(err);
-        setError("Invalid token or GitLab instance URL."); // Gérer les erreurs
+        setError("Token invalide ou URL de l'instance GitLab."); // Gérer les erreurs
       }
     } else {
       setError("Veuillez saisir l’URL GitLab et votre token d’accès."); // Message d'erreur si les champs sont vides
     }
   };
 
+  const handleGitlabUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedUrl = e.target.value;
+    setGitlabUrl(selectedUrl);
+    if (selectedUrl === "https://git.soa.mg/") {
+      setSupportUrl("https://git.soa.mg/");
+    } else if (selectedUrl === "https://git.softia.fr/") {
+      setSupportUrl("https://git.softia.fr/");
+    }
+  };
+
   return (
     <Container
       style={{ padding: "20px", maxWidth: "400px", marginTop: "50px" }}
+      className="shadow-sm"
     >
-      <h1 className="text-center">GitTrack</h1>
-      <Form>
+      <h1 className="text-center mb-4">Connexion à GitTrack</h1>
+      <Form onSubmit={handleLogin}>
         <FormGroup>
-          <Label for="gitlabUrl">URL de votre instance GitLab</Label>
+          <Label for="gitlabUrl" className="form-label">
+            Instance GitLab
+          </Label>
           <Input
-            type="text"
+            type="select"
             id="gitlabUrl"
-            placeholder="Entrer l'URL de votre instance GitLab"
             value={gitlabUrl}
-            onChange={(e) => setGitlabUrl(e.target.value)} // Mettre à jour l'état de l'URL
-          />
+            onChange={handleGitlabUrlChange}
+            aria-label="Sélectionnez votre instance GitLab"
+          >
+            <option value="">Sélectionnez votre instance GitLab</option>
+            <option value="https://git.soa.mg/">Soa (git.soa.mg)</option>
+            <option value="https://git.softia.fr/">
+              Softia (git.softia.fr)
+            </option>
+          </Input>
         </FormGroup>
         <FormGroup>
-          <Label for="token">Token d&apos;accès</Label>
+          <Label for="token" className="form-label">
+            Token d&apos;accès
+          </Label>
           <Input
             type="text"
             id="token"
             placeholder="Entrer votre Token d'accès Gitlab"
             value={token}
-            onChange={(e) => setToken(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setToken(e.target.value)
+            }
+            aria-label="Entrer votre Token d'accès Gitlab"
           />
         </FormGroup>
-        <Button color="primary" onClick={handleLogin} block>
+        <Button color="primary" type="submit" block>
           Se connecter
         </Button>
         {error && (
-          <Alert color="danger" className="mt-3">
+          <Alert color="danger" className="mt-3" role="alert">
             {error}
           </Alert>
         )}
       </Form>
+      <div className="text-center mt-3">
+        <a
+          href={supportUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-muted"
+        >
+          Besoin d&apos;aide ?
+        </a>
+      </div>
     </Container>
   );
 };
