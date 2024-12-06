@@ -44,6 +44,9 @@ import {
 } from "react-icons/fa";
 import Link from "next/link"; 
 import { useUserInfo } from "@/hooks/useUserInfo";
+import { useLegendContext } from "@/context/LegendContext";
+import { TaskType } from "react-gantt-chart";
+import useActiveStates from "@/hooks/useActiveStates";
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 
@@ -402,6 +405,8 @@ export default function Home() {
     }
   };
 
+  const activeStates = useActiveStates();
+
   const prepareGanttData = (): Task[] => {
     const today = new Date();
     const monthStart = startOfMonth(today);
@@ -426,74 +431,102 @@ export default function Home() {
     // Utilisez les issues triées
     const sorted = sortedIssues();
 
-    return sorted.map((issue) => {
-      const startDate = issue.created_at
-        ? parseISO(issue.created_at)
-        : monthStart;
-      const endDate = issue.due_date
-        ? parseISO(issue.due_date)
-        : addDays(startDate, 7);
-      const isOverdue = isAfter(today, endDate) && issue.state !== "closed";
-      const isNotStarted =
-        issue.state === "opened" && issue.time_stats.total_time_spent === 0;
-
-      // Calcul du pourcentage de progression
-      let progress = 0;
-      if (!isNotStarted) {
-        if (issue.time_stats.time_estimate > 0) {
-          progress = Math.min(
-            100,
-            (issue.time_stats.total_time_spent /
-              issue.time_stats.time_estimate) *
-              100
-          );
-        } else if (issue.state === "closed") {
-          progress = 100;
-        } else {
-          const totalDuration = endDate.getTime() - startDate.getTime();
-          const elapsedDuration = today.getTime() - startDate.getTime();
-          progress = Math.min(100, (elapsedDuration / totalDuration) * 100);
+    return sorted
+      .map((issue) => {
+        function getStartDate(issue: { created_at: string }): Date | null {
+          try {
+            return issue?.created_at ? parseISO(issue.created_at) : null;
+          } catch (error) {
+            console.error(
+              "Erreur lors de la conversion de la date de création:",
+              error
+            );
+            return null;
+          }
         }
-      }
 
-      const roundedProgress = Math.round(progress);
+        const startDate = getStartDate(issue) ?? new Date(); // Default to today if startDate is null
+        const endDate = startDate ? addDays(startDate, 7) : new Date();
 
-      // Inclure le pourcentage dans le nom de la tâche
-      const taskName = isNotStarted
-        ? issue.title
-        : `${issue.title} (${roundedProgress}%)`;
+        // Use nullish coalescing operator to handle potential null values
+        const isOverdue =
+          isAfter(today, endDate ?? new Date()) && issue.state !== "closed";
+        const isNotStarted =
+          issue.state === "opened" && issue.time_stats.total_time_spent === 0;
 
-      return {
-        id: issue.iid.toString(),
-        name: taskName,
-        start: startDate,
-        end: endDate,
-        progress: roundedProgress,
-        type: "task",
-        project: selectedProject?.name || "",
-        assignee:
-          issue.assignees.length > 0
-            ? {
-                name: issue.assignees[0].name,
-                avatar_url: issue.assignees[0].avatar_url,
-              }
-            : undefined,
-        styles: {
-          backgroundColor: isOverdue
-            ? "#ff0000"
-            : isNotStarted
-            ? "#c1c5c9"
-            : "#0D6EFD",
-          backgroundSelectedColor: isOverdue
-            ? "#FF6961"
-            : isNotStarted
-            ? "#32CD32"
-            : "#0056b3",
-          progressColor: "#008040",
-          progressSelectedColor: "#FACA22",
-        },
-      };
-    });
+        // Déterminez l'état de la tâche en fonction des légendes
+        let taskState:
+          | "En retard"
+          | "À faire"
+          | "En cours"
+          | "Progression"
+          | null = null;
+        if (isOverdue) taskState = "En retard";
+        else if (isNotStarted) taskState = "À faire";
+        else if (issue.state === "opened") taskState = "En cours";
+        else if (issue.state === "closed") taskState = "Progression";
+
+        // Ne pas afficher la tâche si l'état correspondant est désactivé
+        if (taskState !== null && !activeStates[taskState]) return null;
+
+        // Calcul du pourcentage de progression
+        let progress = 0;
+        if (!isNotStarted) {
+          if (issue.time_stats.time_estimate > 0) {
+            progress = Math.min(
+              100,
+              (issue.time_stats.total_time_spent /
+                issue.time_stats.time_estimate) *
+                100
+            );
+          } else if (issue.state === "closed") {
+            progress = 100;
+          } else {
+            const totalDuration = endDate.getTime() - startDate.getTime();
+            const elapsedDuration = today.getTime() - startDate.getTime();
+            progress = Math.min(100, (elapsedDuration / totalDuration) * 100);
+          }
+        }
+
+        const roundedProgress = Math.round(progress);
+
+        // Inclure le pourcentage dans le nom de la tâche
+        const taskName = isNotStarted
+          ? issue.title
+          : `${issue.title} (${roundedProgress}%)`;
+
+        return {
+          id: issue.iid.toString(),
+          name: taskName,
+          start: startDate,
+          end: endDate,
+          progress: roundedProgress,
+          type: "task" as TaskType,
+          project: selectedProject?.name || "",
+          assignee:
+            issue.assignees.length > 0
+              ? {
+                  name: issue.assignees[0].name,
+                  avatar_url: issue.assignees[0].avatar_url,
+                }
+              : undefined,
+          styles: {
+            backgroundColor: isOverdue
+              ? "#ff0000"
+              : isNotStarted
+              ? "#c1c5c9"
+              : "#0D6EFD",
+            backgroundSelectedColor: isOverdue
+              ? "#FF6961"
+              : isNotStarted
+              ? "#32CD32"
+              : "#0056b3",
+            progressColor: "#008040",
+            progressSelectedColor: "#FACA22",
+          },
+        };
+      })
+      .filter((task) => task !== null); // Filtrer les tâches null
   };
 
   let columnWidth = 60; // Augmenté pour le mode jour
@@ -505,62 +538,74 @@ export default function Home() {
   if (loading) return <div className="loading">Chargement...</div>;
 
   // Légende des couleurs pour le diagramme de Gantt
-  const Legend = () => {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-around",
-          margin: "20px 0",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <div
-            style={{
-              width: "20px",
-              height: "20px",
-              backgroundColor: "#ff0000",
-              marginRight: "8px",
-            }}
-          ></div>
-          <span>En retard</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <div
-            style={{
-              width: "20px",
-              height: "20px",
-              backgroundColor: "#c1c5c9",
-              marginRight: "8px",
-            }}
-          ></div>
-          <span>A faire</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <div
-            style={{
-              width: "20px",
-              height: "20px",
-              backgroundColor: "#0D6EFD",
-              marginRight: "8px",
-            }}
-          ></div>
-          <span>En cours</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <div
-            style={{
-              width: "20px",
-              height: "20px",
-              backgroundColor: "#008040",
-              marginRight: "8px",
-            }}
-          ></div>
-          <span>Progression</span>
-        </div>
-      </div>
-    );
-  };
+ const Legend = () => {
+   // Utiliser le contexte
+   const { activeStates, setActiveStates } = useLegendContext();
+
+   // Définir un type explicite pour les états d'activation
+   type StateKeys = "En retard" | "À faire" | "En cours" | "Progression";
+
+   // Définir les couleurs par défaut
+   const defaultColors: Record<StateKeys, string> = {
+     "En retard": "#ff0000",
+     "À faire": "#c1c5c9",
+     "En cours": "#0D6EFD",
+     Progression: "#008040",
+   };
+
+   // Fonction de gestion des clics
+   const handleClick = (label: StateKeys) => {
+     setActiveStates((prevStates) => ({
+       ...prevStates,
+       [label]: !prevStates[label], // Inverse l'état actuel
+     }));
+   };
+
+   // Fonction pour déterminer la couleur de fond
+   const getBackgroundColor = (label: StateKeys) => {
+     return activeStates[label] ? defaultColors[label] : "#444444"; // Couleur initiale si actif, grise si inactif
+   };
+
+   // Définir les genres des étiquettes pour les mentions (désactivé/désactivée)
+   const feminineLabels: StateKeys[] = ["Progression"];
+
+   return (
+     <div
+       style={{
+         display: "flex",
+         justifyContent: "space-around",
+         margin: "20px 0",
+       }}
+     >
+       {["En retard", "À faire", "En cours", "Progression"].map((label) => (
+         <div key={label} style={{ display: "flex", alignItems: "center" }}>
+           <div
+             style={{
+               width: "20px",
+               height: "20px",
+               backgroundColor: getBackgroundColor(label as StateKeys),
+               marginRight: "8px",
+               cursor: "pointer",
+             }}
+             onClick={() => handleClick(label as StateKeys)}
+           ></div>
+           <span>
+             {label}{" "}
+             {!activeStates[label as StateKeys] && (
+               <em>
+                 (
+                 {feminineLabels.includes(label as StateKeys)
+                   ? "désactivée"
+                   : "désactivé"}
+                 )
+               </em>
+             )}
+           </span>
+         </div>
+       ))}
+     </div>
+   );
+ };
 
   const MembersList = () => {
     const isActiveMember = (member: ProjectMember) => {

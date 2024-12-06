@@ -4,6 +4,7 @@ import { AppProps } from "next/app"; // Importer AppProps de Next.js
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import "../globals.css";
+import { LegendProvider } from "../context/LegendContext"; // Importer LegendProvider
 
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -23,7 +24,11 @@ function MyApp({ Component, pageProps }: AppProps) {
     }
   }, [router]);
 
-  return <Component {...pageProps} />;
+  return (
+    <LegendProvider>
+      <Component {...pageProps} />
+    </LegendProvider>
+  );
 }
 
 export default MyApp;
