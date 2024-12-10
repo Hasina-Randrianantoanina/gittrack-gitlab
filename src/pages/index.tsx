@@ -1,7 +1,6 @@
-// src/pages/index.tsx
 "use client";
 
-import React, { useEffect, useState, FC} from "react";
+import React, { useEffect, useState, FC } from "react";
 import {
   getProjects,
   Project,
@@ -35,18 +34,18 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import Image from "next/image";
-import { FiRefreshCw} from "react-icons/fi";
+import { FiRefreshCw } from "react-icons/fi";
 import {
   FaSortUp,
   FaSortDown,
   FaClipboardList,
   FaChartBar,
 } from "react-icons/fa";
-import Link from "next/link"; 
+import Link from "next/link";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import { useLegendContext } from "@/context/LegendContext";
-import { TaskType } from "react-gantt-chart";
 import useActiveStates from "@/hooks/useActiveStates";
+import { TaskType } from "react-gantt-chart";
 
 const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 
@@ -57,6 +56,9 @@ interface Task extends GanttTask {
     name: string;
     avatar_url: string;
   };
+  dependencies?: string[]; // Ajoutez cette ligne pour les dépendances
+  dependency?: string; // Ajoutez cette ligne pour la dépendance
+  dependencyStyle?: object; // Ajoutez cette ligne pour le style de la dépendance
 }
 
 interface CustomTooltipProps {
@@ -226,7 +228,7 @@ export default function Home() {
   const [view, setView] = useState<ViewMode>(ViewMode.Day);
   const [isChecked, setIsChecked] = useState(true);
   const router = useRouter();
-  const { userInfo} = useUserInfo();
+  const { userInfo } = useUserInfo();
   const [sortByDueDate, setSortByDueDate] = useState(false);
   const [filterOpenedIssues, setFilterOpenedIssues] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
@@ -273,14 +275,14 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-         const token = localStorage.getItem("gitlab_token");
-         const url = localStorage.getItem("gitlab_url");
-         if (!token || !url) {
-           // Rediriger vers la page de connexion si le token ou l'URL ne sont pas définis
-           router.push("/login");
-           return;
-         }
-         console.log("Fetching user info from:", url);
+        const token = localStorage.getItem("gitlab_token");
+        const url = localStorage.getItem("gitlab_url");
+        if (!token || !url) {
+          // Rediriger vers la page de connexion si le token ou l'URL ne sont pas définis
+          router.push("/login");
+          return;
+        }
+        console.log("Fetching user info from:", url);
         // const userInfoData = await getUserInfo(url, token);
         // setUserInfo(userInfoData);
 
@@ -495,6 +497,11 @@ export default function Home() {
           ? issue.title
           : `${issue.title} (${roundedProgress}%)`;
 
+        // Ajoutez les dépendances ici
+        const dependencies =
+          extractDependencies(issue.description).map((id) => id.toString()) ||
+          [];
+
         return {
           id: issue.iid.toString(),
           name: taskName,
@@ -524,10 +531,24 @@ export default function Home() {
             progressColor: "#008040",
             progressSelectedColor: "#FACA22",
           },
+          dependencies, // Ajoutez les dépendances ici
+          dependency: dependencies.length > 0 ? dependencies[0] : undefined, // Ajoutez la dépendance ici
+          dependencyStyle: {
+            color: "#ff0000", // Couleur de la flèche de dépendance
+          },
         };
       })
       .filter((task) => task !== null); // Filtrer les tâches null
   };
+
+  const extractDependencies = (description: string): number[] => {
+    const dependencyRegex = /Issue #(\d+)/g;
+    const matches = description.match(dependencyRegex);
+    return matches
+      ? matches.map((match) => parseInt(match.split("#")[1], 10))
+      : [];
+  };
+
 
   let columnWidth = 60; // Augmenté pour le mode jour
   if (view === ViewMode.Month) {
@@ -538,74 +559,74 @@ export default function Home() {
   if (loading) return <div className="loading">Chargement...</div>;
 
   // Légende des couleurs pour le diagramme de Gantt
- const Legend = () => {
-   // Utiliser le contexte
-   const { activeStates, setActiveStates } = useLegendContext();
+  const Legend = () => {
+    // Utiliser le contexte
+    const { activeStates, setActiveStates } = useLegendContext();
 
-   // Définir un type explicite pour les états d'activation
-   type StateKeys = "En retard" | "À faire" | "En cours" | "Progression";
+    // Définir un type explicite pour les états d'activation
+    type StateKeys = "En retard" | "À faire" | "En cours" | "Progression";
 
-   // Définir les couleurs par défaut
-   const defaultColors: Record<StateKeys, string> = {
-     "En retard": "#ff0000",
-     "À faire": "#c1c5c9",
-     "En cours": "#0D6EFD",
-     Progression: "#008040",
-   };
+    // Définir les couleurs par défaut
+    const defaultColors: Record<StateKeys, string> = {
+      "En retard": "#ff0000",
+      "À faire": "#c1c5c9",
+      "En cours": "#0D6EFD",
+      Progression: "#008040",
+    };
 
-   // Fonction de gestion des clics
-   const handleClick = (label: StateKeys) => {
-     setActiveStates((prevStates) => ({
-       ...prevStates,
-       [label]: !prevStates[label], // Inverse l'état actuel
-     }));
-   };
+    // Fonction de gestion des clics
+    const handleClick = (label: StateKeys) => {
+      setActiveStates((prevStates) => ({
+        ...prevStates,
+        [label]: !prevStates[label], // Inverse l'état actuel
+      }));
+    };
 
-   // Fonction pour déterminer la couleur de fond
-   const getBackgroundColor = (label: StateKeys) => {
-     return activeStates[label] ? defaultColors[label] : "#444444"; // Couleur initiale si actif, grise si inactif
-   };
+    // Fonction pour déterminer la couleur de fond
+    const getBackgroundColor = (label: StateKeys) => {
+      return activeStates[label] ? defaultColors[label] : "#444444"; // Couleur initiale si actif, grise si inactif
+    };
 
-   // Définir les genres des étiquettes pour les mentions (désactivé/désactivée)
-   const feminineLabels: StateKeys[] = ["Progression"];
+    // Définir les genres des étiquettes pour les mentions (désactivé/désactivée)
+    const feminineLabels: StateKeys[] = ["Progression"];
 
-   return (
-     <div
-       style={{
-         display: "flex",
-         justifyContent: "space-around",
-         margin: "20px 0",
-       }}
-     >
-       {["En retard", "À faire", "En cours", "Progression"].map((label) => (
-         <div key={label} style={{ display: "flex", alignItems: "center" }}>
-           <div
-             style={{
-               width: "20px",
-               height: "20px",
-               backgroundColor: getBackgroundColor(label as StateKeys),
-               marginRight: "8px",
-               cursor: "pointer",
-             }}
-             onClick={() => handleClick(label as StateKeys)}
-           ></div>
-           <span>
-             {label}{" "}
-             {!activeStates[label as StateKeys] && (
-               <em>
-                 (
-                 {feminineLabels.includes(label as StateKeys)
-                   ? "désactivée"
-                   : "désactivé"}
-                 )
-               </em>
-             )}
-           </span>
-         </div>
-       ))}
-     </div>
-   );
- };
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-around",
+          margin: "20px 0",
+        }}
+      >
+        {["En retard", "À faire", "En cours", "Progression"].map((label) => (
+          <div key={label} style={{ display: "flex", alignItems: "center" }}>
+            <div
+              style={{
+                width: "20px",
+                height: "20px",
+                backgroundColor: getBackgroundColor(label as StateKeys),
+                marginRight: "8px",
+                cursor: "pointer",
+              }}
+              onClick={() => handleClick(label as StateKeys)}
+            ></div>
+            <span>
+              {label}{" "}
+              {!activeStates[label as StateKeys] && (
+                <em>
+                  (
+                  {feminineLabels.includes(label as StateKeys)
+                    ? "désactivée"
+                    : "désactivé"}
+                  )
+                </em>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const MembersList = () => {
     const isActiveMember = (member: ProjectMember) => {

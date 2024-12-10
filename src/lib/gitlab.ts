@@ -119,6 +119,7 @@ export interface Issue {
   };
   weight: number | null;
   has_tasks: boolean;
+  blocked_by_issue_ids?: number[]; // Ajoutez cette ligne pour les dépendances
 }
 
 export interface Label {
