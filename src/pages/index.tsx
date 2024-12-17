@@ -433,30 +433,34 @@ export default function Home() {
     // Utilisez les issues triées
     const sorted = sortedIssues();
 
-    return sorted
+    // Filtrer d'abord les tâches nulles ou invalides
+    const validTasks = sorted
       .map((issue) => {
-        function getStartDate(issue: { created_at: string }): Date | null {
-          try {
-            return issue?.created_at ? parseISO(issue.created_at) : null;
-          } catch (error) {
-            console.error(
-              "Erreur lors de la conversion de la date de création:",
-              error
-            );
-            return null;
-          }
+        // Vérifier si l'issue est valide
+        if (!issue || !issue.created_at) {
+          return null;
         }
 
-        const startDate = getStartDate(issue) ?? new Date(); // Default to today if startDate is null
-        const endDate = startDate ? addDays(startDate, 7) : new Date();
+        let startDate: Date;
+        try {
+          startDate = parseISO(issue.created_at);
+        } catch (error) {
+          console.error("Erreur de parsing de date:", error);
+          return null;
+        }
 
-        // Use nullish coalescing operator to handle potential null values
-        const isOverdue =
-          isAfter(today, endDate ?? new Date()) && issue.state !== "closed";
+        // Si la date de début n'est pas valide, utiliser la date du jour
+        if (!startDate || isNaN(startDate.getTime())) {
+          startDate = new Date();
+        }
+
+        const endDate = addDays(startDate, 7);
+
+        // Vérifier si l'état de la tâche correspond aux filtres actifs
+        const isOverdue = isAfter(today, endDate) && issue.state !== "closed";
         const isNotStarted =
           issue.state === "opened" && issue.time_stats.total_time_spent === 0;
 
-        // Déterminez l'état de la tâche en fonction des légendes
         let taskState:
           | "En retard"
           | "À faire"
@@ -468,8 +472,10 @@ export default function Home() {
         else if (issue.state === "opened") taskState = "En cours";
         else if (issue.state === "closed") taskState = "Progression";
 
-        // Ne pas afficher la tâche si l'état correspondant est désactivé
-        if (taskState !== null && !activeStates[taskState]) return null;
+        // Vérifier si l'état est actif dans les filtres
+        if (taskState !== null && !activeStates[taskState]) {
+          return null;
+        }
 
         // Calcul du pourcentage de progression
         let progress = 0;
@@ -491,16 +497,12 @@ export default function Home() {
         }
 
         const roundedProgress = Math.round(progress);
-
-        // Inclure le pourcentage dans le nom de la tâche
         const taskName = isNotStarted
           ? issue.title
           : `${issue.title} (${roundedProgress}%)`;
-
-        // Ajoutez les dépendances ici
-        const dependencies =
-          extractDependencies(issue.description).map((id) => id.toString()) ||
-          [];
+        const dependencies = extractDependencies(issue.description).map((id) =>
+          id.toString()
+        );
 
         return {
           id: issue.iid.toString(),
@@ -531,14 +533,31 @@ export default function Home() {
             progressColor: "#008040",
             progressSelectedColor: "#FACA22",
           },
-          dependencies, // Ajoutez les dépendances ici
-          dependency: dependencies.length > 0 ? dependencies[0] : undefined, // Ajoutez la dépendance ici
+          dependencies,
+          dependency: dependencies.length > 0 ? dependencies[0] : undefined,
           dependencyStyle: {
-            color: "#ff0000", // Couleur de la flèche de dépendance
+            color: "#ff0000",
           },
         };
       })
-      .filter((task) => task !== null); // Filtrer les tâches null
+      .filter((task) => task !== null);
+
+    // Si aucune tâche valide n'est trouvée, retourner la tâche par défaut
+    return validTasks.length > 0
+      ? validTasks
+      : [
+          {
+            id: "default",
+            name: "Aucune tâche trouvée",
+            start: monthStart,
+            end: monthEnd,
+            progress: 0,
+            type: "task",
+            project: selectedProject?.name || "",
+            styles: { backgroundColor: "#E0E0E0" },
+            assignee: undefined,
+          },
+        ];
   };
 
   const extractDependencies = (description: string): number[] => {
@@ -914,7 +933,8 @@ export default function Home() {
                 ganttHeight={windowDimensions.height * 0.65}
                 headerHeight={60}
                 rowHeight={60}
-                barFill={65}
+                barFill={70}
+                barCornerRadius={5}
                 barProgressColor="#0D6EFD"
                 barBackgroundColor="#E0E0E0"
                 handleWidth={8}
