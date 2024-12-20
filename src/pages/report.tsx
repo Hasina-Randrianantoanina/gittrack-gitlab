@@ -1,4 +1,3 @@
-// src/pages/report.tsx
 import React, { useEffect, useState } from "react";
 import {
   getProjects,
@@ -12,15 +11,22 @@ import {
   Project,
   Issue,
   UserInfo,
-  Milestone, // Assurez-vous d'importer vos types définis
-  IssuesStatistics, // Assurez-vous d'importer vos types définis
-  Event, // Assurez-vous d'importer vos types définis
+  Milestone,
+  IssuesStatistics,
+  Event,
 } from "../lib/gitlab";
-import { Container, Row, Col, Table, Button, Input} from "reactstrap";
-import { FiEye } from "react-icons/fi";
-import { FaArrowLeft, FaInfoCircle } from "react-icons/fa";
+import { Container, Row, Col, Button } from "reactstrap";
+import { FaArrowLeft } from "react-icons/fa";
 import { useRouter } from "next/router";
 import withPermission from "@/components/withPermission";
+import ProjectList from "../components/ProjectList";
+import ProjectDetails from "../components/ProjectDetails";
+import IssuesTable from "../components/IssuesTable";
+import MilestonesTable from "../components/MilestonesTable";
+import LabelsList from "../components/LabelsList";
+import IssuesStatisticsTable from "../components/IssuesStatistics";
+import AssignedUsers from "../components/AssignedUsers";
+import ActivityHistory from "../components/ActivityHistory";
 
 const ReportPage = () => {
   const router = useRouter();
@@ -30,17 +36,21 @@ const ReportPage = () => {
   const [userDetails, setUserDetails] = useState<{ [key: number]: UserInfo }>(
     {}
   );
-
-  // Nouveaux états pour stocker les détails supplémentaires
   const [projectDetails, setProjectDetails] = useState<Project | null>(null);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [labels, setLabels] = useState<{ id: number; name: string }[]>([]); // Modifiez le type pour correspondre à la structure des labels
+  const [labels, setLabels] = useState<{ id: number; name: string }[]>([]);
   const [issuesStatistics, setIssuesStatistics] =
     useState<IssuesStatistics | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
-   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
-     null
-   );
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    null
+  );
+  const [activeRow, setActiveRow] = useState<number | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [titleFilter, setTitleFilter] = useState("");
+  const [stateFilter, setStateFilter] = useState("");
+  const [assigneeFilter, setAssigneeFilter] = useState("");
+  const [labelFilter, setLabelFilter] = useState("");
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -55,7 +65,6 @@ const ReportPage = () => {
           return;
         }
 
-        // Vérifiez que l'URL commence par HTTPS
         if (!url.startsWith("https://")) {
           throw new Error("GITLAB_API_URL must use HTTPS");
         }
@@ -73,7 +82,6 @@ const ReportPage = () => {
     fetchProjects();
   }, []);
 
-  // Effet pour récupérer les détails du projet sélectionné
   useEffect(() => {
     const fetchIssuesAndDetails = async () => {
       if (!selectedProjectId) return;
@@ -93,15 +101,12 @@ const ReportPage = () => {
           throw new Error("GITLAB_API_URL must use HTTPS");
         }
 
-        // Récupérer les issues du projet
         const data = await getProjectIssues(selectedProjectId, url, token);
         setIssues(data);
 
-        // Récupérer les détails du projet
         const details = await getProjectDetails(selectedProjectId, url, token);
         setProjectDetails(details);
 
-        // Récupérer les jalons associés
         const milestonesData = await getProjectMilestones(
           selectedProjectId,
           url,
@@ -109,7 +114,6 @@ const ReportPage = () => {
         );
         setMilestones(milestonesData);
 
-        // Récupérer les labels associés
         const labelsData = await getProjectLabels(
           selectedProjectId,
           url,
@@ -117,7 +121,6 @@ const ReportPage = () => {
         );
         setLabels(labelsData);
 
-        // Récupérer les statistiques des issues
         const statisticsData = await getProjectIssuesStatistics(
           selectedProjectId,
           url,
@@ -125,7 +128,6 @@ const ReportPage = () => {
         );
         setIssuesStatistics(statisticsData);
 
-        // Récupérer l'historique des activités
         const eventsData = await getProjectEvents(
           selectedProjectId,
           url,
@@ -133,13 +135,11 @@ const ReportPage = () => {
         );
         setEvents(eventsData);
 
-        // Récupérer les IDs des utilisateurs assignés
         const userIds = data.flatMap((issue) =>
           issue.assignees.map((assignee) => assignee.id)
         );
         const uniqueUserIds = Array.from(new Set(userIds));
 
-        // Récupérer les détails des utilisateurs assignés
         const userPromises = uniqueUserIds.map((id) =>
           fetchUserById(id, url, token)
         );
@@ -162,32 +162,10 @@ const ReportPage = () => {
     fetchIssuesAndDetails();
   }, [selectedProjectId]);
 
-  const [activeRow, setActiveRow] = useState<number | null>(null); // État pour suivre la ligne active
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null); // État pour suivre la ligne survolée
-
   const handleRowClick = (projectId: number) => {
-    setActiveRow(projectId); // Met à jour l'état avec l'ID du projet cliqué
-    setSelectedProjectId(projectId); // Appelle la fonction pour récupérer les détails
+    setActiveRow(projectId);
+    setSelectedProjectId(projectId);
   };
-
-  /**Filtres par colone dans Issue de projet */
-  const [titleFilter, setTitleFilter] = useState("");
-  const [stateFilter, setStateFilter] = useState("");
-  const [assigneeFilter, setAssigneeFilter] = useState("");
-  const [labelFilter, setLabelFilter] = useState("");
-
-  const filteredIssues = issues.filter(
-    (issue) =>
-      issue.title.toLowerCase().includes(titleFilter.toLowerCase()) &&
-      issue.state.toLowerCase().includes(stateFilter.toLowerCase()) &&
-      (issue.assignee?.name.toLowerCase() || "").includes(
-        assigneeFilter.toLowerCase()
-      ) &&
-      issue.labels.some((label) =>
-        label.toLowerCase().includes(labelFilter.toLowerCase())
-      )
-  );
-  /**Fin filtres par colonne dans Issue de projet */
 
   if (loading)
     return (
@@ -200,11 +178,10 @@ const ReportPage = () => {
 
   return (
     <Container fluid>
-      {/* Bouton de retour */}
       <div className="d-flex justify-content-start my-3">
         <Button
           color="secondary"
-          onClick={() => router.push("/")} // Utilisation de router.push pour rediriger
+          onClick={() => router.push("/")}
           className="d-flex align-items-center"
         >
           <FaArrowLeft className="me-2" /> Retour
@@ -212,402 +189,45 @@ const ReportPage = () => {
       </div>
       <h1 className="text-left my-4">Rapports des activités</h1>
       <Row>
-        {/* Colonne des projets */}
         <Col xs={12} md={4} className="mb-4">
           <h2 className="h5">Projets</h2>
-          <div className="table-responsive">
-            <Table hover>
-              <thead>
-                <tr>
-                  <th>Nom du Projet</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {projects.map((project) => (
-                  <tr
-                    key={project.id}
-                    onClick={() => handleRowClick(project.id)} // Gère le clic sur la ligne
-                    onMouseEnter={() => setHoveredRow(project.id)} // Gère le survol de la ligne
-                    onMouseLeave={() => setHoveredRow(null)} // Réinitialise le survol
-                    style={{
-                      backgroundColor:
-                        activeRow === project.id || hoveredRow === project.id
-                          ? "#ffeb3b"
-                          : "transparent", // Change la couleur de fond si actif ou survolé
-                      cursor: "pointer", // Change le curseur pour indiquer que c'est cliquable
-                    }}
-                  >
-                    <td>{project.name}</td>
-                    <td>
-                      <Button
-                        color={activeRow === project.id ? "success" : "primary"} // Change la couleur du bouton si la ligne est active
-                        onClick={(e) => {
-                          e.stopPropagation(); // Empêche le clic sur le bouton de déclencher l'événement de ligne
-                          handleRowClick(project.id);
-                          setActiveRow(project.id); // Met à jour l'état avec l'ID du projet cliqué
-                        }}
-                        className="d-flex align-items-center px-2 py-1"
-                      >
-                        {activeRow === project.id ? (
-                          <>
-                            <FaInfoCircle size={18} className="me-2" />
-                            {project.name} {/* Affiche le nom du projet */}
-                          </>
-                        ) : (
-                          <>
-                            <FiEye size={18} className="me-2" />
-                            Voir
-                          </>
-                        )}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
+          <ProjectList
+            projects={projects}
+            activeRow={activeRow}
+            hoveredRow={hoveredRow}
+            onRowClick={handleRowClick}
+            onMouseEnter={setHoveredRow}
+            onMouseLeave={() => setHoveredRow(null)}
+          />
         </Col>
-
-        {/* Colonne des détails */}
         <Col xs={12} md={8}>
-          {projectDetails && (
-            <>
-              <h2 className="h5">
-                Détails du Projet : <strong>{projectDetails.name}</strong>
-              </h2>
-              {/* <p>
-                <strong>Nom :</strong> {projectDetails.name}
-              </p> */}
-              <p>
-                <strong>Description :</strong> {projectDetails.description}
-              </p>
-              <p>
-                <strong>Créé le :</strong>{" "}
-                {projectDetails.created_at
-                  ? new Date(projectDetails.created_at).toLocaleDateString()
-                  : "Date inconnue"}
-              </p>
-            </>
-          )}
-
-          {/* Issues */}
-          <div className="report-page">
-            <h2 className="h5 mb-3">Issues du Projet</h2>
-            <div className="table-responsive">
-              {issues.length > 0 ? (
-                <Table striped bordered hover>
-                  <thead className="table-header">
-                    <tr>
-                      <th className="text-center">
-                        Titre
-                        <Input
-                          type="text"
-                          placeholder="Filtrer"
-                          value={titleFilter}
-                          onChange={(e) => setTitleFilter(e.target.value)}
-                          className="filter-input mt-2"
-                        />
-                      </th>
-                      <th className="text-center">
-                        État
-                        <Input
-                          type="text"
-                          placeholder="Filtrer"
-                          value={stateFilter}
-                          onChange={(e) => setStateFilter(e.target.value)}
-                          className="filter-input mt-2"
-                        />
-                      </th>
-                      <th className="text-center">
-                        Assigné à
-                        <Input
-                          type="text"
-                          placeholder="Filtrer"
-                          value={assigneeFilter}
-                          onChange={(e) => setAssigneeFilter(e.target.value)}
-                          className="filter-input mt-2"
-                        />
-                      </th>
-                      <th className="text-center align-middle">
-                        Date de création
-                      </th>
-                      <th className="text-center align-middle">
-                        Date d&apos;échéance
-                      </th>
-                      <th className="text-center align-middle">Temps estimé</th>
-                      <th className="text-center align-middle">Temps passé</th>
-                      <th className="text-center align-middle">
-                        Écart de temps
-                      </th>
-                      <th className="text-center align-middle">
-                        % de temps réalisé
-                      </th>
-                      <th className="text-center">
-                        Étiquettes
-                        <Input
-                          type="text"
-                          placeholder="Filtrer"
-                          value={labelFilter}
-                          onChange={(e) => setLabelFilter(e.target.value)}
-                          className="filter-input mt-2"
-                        />
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredIssues.map((issue) => {
-                      const timeEstimate = issue.time_stats.time_estimate;
-                      const timeSpent = issue.time_stats.total_time_spent;
-                      const percentComplete =
-                        timeEstimate > 0
-                          ? Math.min(100, (timeSpent / timeEstimate) * 100)
-                          : 0;
-
-                      return (
-                        <tr key={issue.id}>
-                          <td>{issue.title}</td>
-                          <td>
-                            {issue.state === "opened"
-                              ? "Ouverte"
-                              : issue.state === "closed"
-                              ? "Fermée"
-                              : issue.state}
-                          </td>
-                          <td>{issue.assignee?.name || "Non assigné"}</td>
-                          <td>
-                            {new Date(issue.created_at).toLocaleDateString()}
-                          </td>
-                          <td>
-                            {issue.due_date
-                              ? new Date(issue.due_date).toLocaleDateString()
-                              : "Pas de date"}
-                          </td>
-                          <td>{(timeEstimate / 3600).toFixed(2)}h</td>
-                          <td>{(timeSpent / 3600).toFixed(2)}h</td>
-                          <td>
-                            {((timeEstimate - timeSpent) / 3600).toFixed(2)}h
-                          </td>
-                          <td>{percentComplete.toFixed(2)}%</td>
-                          <td>{issue.labels.join(", ")}</td>
-                        </tr>
-                      );
-                    })}
-                    <tr className="table-info">
-                      <td colSpan={5}>
-                        <strong>Total cumulé</strong>
-                      </td>
-                      <td>
-                        <strong>
-                          {(
-                            filteredIssues.reduce(
-                              (sum, issue) =>
-                                sum + issue.time_stats.time_estimate,
-                              0
-                            ) / 3600
-                          ).toFixed(2)}
-                          h
-                        </strong>
-                      </td>
-                      <td>
-                        <strong>
-                          {(
-                            filteredIssues.reduce(
-                              (sum, issue) =>
-                                sum + issue.time_stats.total_time_spent,
-                              0
-                            ) / 3600
-                          ).toFixed(2)}
-                          h
-                        </strong>
-                      </td>
-                      <td>
-                        <strong>
-                          {(
-                            (filteredIssues.reduce(
-                              (sum, issue) =>
-                                sum + issue.time_stats.time_estimate,
-                              0
-                            ) -
-                              filteredIssues.reduce(
-                                (sum, issue) =>
-                                  sum + issue.time_stats.total_time_spent,
-                                0
-                              )) /
-                            3600
-                          ).toFixed(2)}
-                          h
-                        </strong>
-                      </td>
-                      <td>
-                        <strong>
-                          {(
-                            filteredIssues.reduce(
-                              (sum, issue) =>
-                                sum +
-                                (issue.time_stats.time_estimate > 0
-                                  ? Math.min(
-                                      100,
-                                      (issue.time_stats.total_time_spent /
-                                        issue.time_stats.time_estimate) *
-                                        100
-                                    )
-                                  : 0),
-                              0
-                            ) / filteredIssues.length
-                          ).toFixed(2)}
-                          %
-                        </strong>
-                      </td>
-                      <td></td>
-                    </tr>
-                  </tbody>
-                </Table>
-              ) : (
-                <p>Aucun problème trouvé pour ce projet.</p>
-              )}
-            </div>
-          </div>
-
-          {/* Milestones */}
+          <ProjectDetails projectDetails={projectDetails} />
+          <h2 className="h5 mb-3">Issues du Projet</h2>
+          <IssuesTable
+            issues={issues}
+            titleFilter={titleFilter}
+            stateFilter={stateFilter}
+            assigneeFilter={assigneeFilter}
+            labelFilter={labelFilter}
+            setTitleFilter={setTitleFilter}
+            setStateFilter={setStateFilter}
+            setAssigneeFilter={setAssigneeFilter}
+            setLabelFilter={setLabelFilter}
+          />
           <h2 className="h5">Milestones Associés</h2>
-          <div className="table-responsive">
-            {milestones.length > 0 ? (
-              <Table striped bordered hover>
-                <thead>
-                  <tr>
-                    <th>Titre</th>
-                    <th>Date d&apos;échéance</th>
-                    <th>État</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {milestones.map((milestone) => (
-                    <tr key={milestone.id}>
-                      <td>{milestone.title}</td>
-                      <td>
-                        {milestone.due_date
-                          ? new Date(milestone.due_date).toLocaleDateString()
-                          : "Date inconnue"}
-                      </td>
-                      <td>{milestone.state}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            ) : (
-              <p>Aucun jalon trouvé.</p>
-            )}
-          </div>
-
-          {/* Labels */}
+          <MilestonesTable milestones={milestones} />
           <h2 className="h5">Labels des Issues</h2>
-          <ul className="list-unstyled">
-            {labels.length > 0 ? (
-              labels.map((label) => <li key={label.id}>{label.name}</li>)
-            ) : (
-              <p>Aucun label trouvé.</p>
-            )}
-          </ul>
-
-          {/* Statistiques */}
+          <LabelsList labels={labels} />
           <h2 className="h5">Statistiques des Issues</h2>
-          {issuesStatistics && (
-            <div className="table-responsive">
-              <Table striped bordered hover>
-                <thead>
-                  <tr>
-                    <th>Total</th>
-                    <th>Ouverts</th>
-                    <th>Fermés</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>{issuesStatistics.total_count}</td>
-                    <td>{issuesStatistics.opened_count}</td>
-                    <td>{issuesStatistics.closed_count}</td>
-                  </tr>
-                </tbody>
-              </Table>
-            </div>
-          )}
-
-          {/* Utilisateurs assignés */}
+          <IssuesStatisticsTable issuesStatistics={issuesStatistics} />
           <h2 className="h5">Détails des Utilisateurs Assignés</h2>
-          <div className="table-responsive">
-            {Object.keys(userDetails).length > 0 ? (
-              <Table striped bordered hover>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Nom</th>
-                    <th>Nom d&apos;utilisateur</th>
-                    <th>Email</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.values(userDetails).map((user) => (
-                    <tr key={user.id}>
-                      <td>{user.id}</td>
-                      <td>{user.name}</td>
-                      <td>{user.username}</td>
-                      <td>{user.email}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            ) : (
-              <p>Aucun utilisateur assigné trouvé.</p>
-            )}
-          </div>
-
-          {/* Historique des Activités */}
-          {/* Nouvelle section pour afficher les événements */}
+          <AssignedUsers userDetails={userDetails} />
           <h2 className="h5">Historique des Activités</h2>
-          <div className="table-responsive">
-            {events.length > 0 ? (
-              <Table striped bordered hover>
-                <thead>
-                  {/* En-têtes de colonne pour l'historique des activités */}{" "}
-                  <tr>
-                    <th>Date</th>
-                    <th>Action</th>
-                    <th>Auteur</th>
-                  </tr>
-                </thead>
-                {/* Corps du tableau pour afficher les événements */}
-                {/* Ajoutez ici le corps du tableau comme précédemment */}
-                {/* Exemple de corps de tableau pour les événements */}
-                <tbody>
-                  {events.map((event) => (
-                    <tr key={event.id}>
-                      {/* Assurez-vous que la structure de l'événement contient ces propriétés */}{" "}
-                      <td>{new Date(event.created_at).toLocaleDateString()}</td>
-                      {/* Affichez l'action ou le nom de l'événement */}{" "}
-                      <td>{event.action_name}</td>
-                      {/* Remplacez par le nom réel de l'auteur si disponible */}
-                      {/* Utilisez l'option de sécurité pour accéder à l'auteur */}
-                      {/* Vérifiez si l'auteur est défini avant d'accéder à son nom */}
-                      {/* Si event.author est un objet avec une propriété name */}
-                      {/* Vous pouvez également vérifier si author existe avant d'accéder à name */}
-                      {/* Si author n'est pas un objet ou si name n'existe pas, affichez "Inconnu" */}{" "}
-                      <td>{event.author?.name || "Inconnu"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            ) : (
-              // Message si aucun événement n'est trouvé
-              <p>Aucune activité trouvée.</p>
-            )}
-          </div>
+          <ActivityHistory events={events} />
         </Col>
       </Row>
     </Container>
   );
 };
 
-// export default ReportPage;
 export default withPermission(ReportPage, "read_public_issues");
-// export default withPermission(ReportPage, "view_all_issues_mr");
