@@ -16,10 +16,14 @@ import {
 import { fr } from "date-fns/locale";
 
 interface Task extends GanttTask {
-  assignee?: { name: string; avatar_url: string };
+  assignee?: {
+    name: string;
+    avatar_url: string;
+  };
   dependencies?: string[];
   dependency?: string;
   dependencyStyle?: object;
+  type: "task" | "milestone" | "project"; // Utilisez les types valides
 }
 
 interface GanttContainerProps {
@@ -40,12 +44,10 @@ const formatDate = (date: Date) => format(date, "dd/MM/yyyy", { locale: fr });
 
 const GanttContainer: FC<GanttContainerProps> = ({
   issues,
-  projectMembers,
   selectedProject,
   view,
   isChecked,
   activeStates,
-  handleAssignMember,
   windowDimensions,
 }) => {
   const prepareGanttData = (): Task[] => {
@@ -61,7 +63,7 @@ const GanttContainer: FC<GanttContainerProps> = ({
           start: monthStart,
           end: monthEnd,
           progress: 0,
-          type: "task",
+          type: "task", // Utilisez un des types valides
           project: selectedProject?.name || "",
           styles: { backgroundColor: "#E0E0E0" },
           assignee: undefined,
@@ -75,10 +77,10 @@ const GanttContainer: FC<GanttContainerProps> = ({
     };
 
     const sorted = sortedIssues();
+
     const validTasks = sorted
       .map((issue) => {
         if (!issue || !issue.created_at) return null;
-
         let startDate: Date;
         try {
           startDate = parseISO(issue.created_at);
@@ -86,14 +88,11 @@ const GanttContainer: FC<GanttContainerProps> = ({
           console.error("Erreur de parsing de date:", error);
           return null;
         }
-
         if (!startDate || isNaN(startDate.getTime())) startDate = new Date();
         const endDate = addDays(startDate, 7);
-
         const isOverdue = isAfter(today, endDate) && issue.state !== "closed";
         const isNotStarted =
           issue.state === "opened" && issue.time_stats.total_time_spent === 0;
-
         let taskState:
           | "En retard"
           | "À faire"
@@ -104,9 +103,7 @@ const GanttContainer: FC<GanttContainerProps> = ({
         else if (isNotStarted) taskState = "À faire";
         else if (issue.state === "opened") taskState = "En cours";
         else if (issue.state === "closed") taskState = "Progression";
-
         if (taskState !== null && !activeStates[taskState]) return null;
-
         let progress = 0;
         if (!isNotStarted) {
           if (issue.time_stats.time_estimate > 0)
@@ -123,7 +120,6 @@ const GanttContainer: FC<GanttContainerProps> = ({
             progress = Math.min(100, (elapsedDuration / totalDuration) * 100);
           }
         }
-
         const roundedProgress = Math.round(progress);
         const taskName = isNotStarted
           ? issue.title
@@ -131,14 +127,15 @@ const GanttContainer: FC<GanttContainerProps> = ({
         const dependencies = extractDependencies(issue.description).map((id) =>
           id.toString()
         );
-
+        // Assurez-vous que 'type' est l'un des types valides
+        const taskType: "task" | "milestone" | "project" = "task"; // Par défaut, utilisez "task"
         return {
           id: issue.iid.toString(),
           name: taskName,
           start: startDate,
           end: endDate,
           progress: roundedProgress,
-          type: "task",
+          type: taskType, // Utilisez la variable 'taskType' pour éviter les erreurs de type
           project: selectedProject?.name || "",
           assignee:
             issue.assignees.length > 0
@@ -166,7 +163,7 @@ const GanttContainer: FC<GanttContainerProps> = ({
           dependencyStyle: { color: "#ff0000" },
         };
       })
-      .filter((task): task is Task => task !== null);
+      .filter((task) => task !== null);
 
     return validTasks.length > 0
       ? validTasks
@@ -177,7 +174,7 @@ const GanttContainer: FC<GanttContainerProps> = ({
             start: monthStart,
             end: monthEnd,
             progress: 0,
-            type: "task",
+            type: "task", // Utilisez un des types valides
             project: selectedProject?.name || "",
             styles: { backgroundColor: "#E0E0E0" },
             assignee: undefined,
