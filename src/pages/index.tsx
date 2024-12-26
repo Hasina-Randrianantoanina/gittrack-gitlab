@@ -9,6 +9,8 @@ import {
   getProjectMembers,
   ProjectMember,
   assignMemberToIssue,
+  getProjectMergeRequests,
+  MergeRequest,
 } from "../lib/gitlab";
 import { useRouter } from "next/router";
 import {
@@ -20,6 +22,7 @@ import {
   FormGroup,
   Label,
   Input,
+  Alert,
 } from "reactstrap";
 import { ViewMode } from "gantt-task-react";
 import { FiRefreshCw } from "react-icons/fi";
@@ -43,8 +46,10 @@ const Home = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
+  const [, setMergeRequests] = useState<MergeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [issuesLoading, setIssuesLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [windowDimensions, setWindowDimensions] = useState({
     width: typeof window !== "undefined" ? window.innerWidth : 0,
     height: typeof window !== "undefined" ? window.innerHeight : 0,
@@ -84,6 +89,7 @@ const Home = () => {
         }
       } catch (error) {
         console.error("Échec de la récupération des projets:", error);
+        setError("Échec de la récupération des projets. Veuillez réessayer.");
       } finally {
         setLoading(false);
       }
@@ -105,19 +111,23 @@ const Home = () => {
           router.push("/login");
           return;
         }
-        const [issuesData, membersData] = await Promise.all([
+        const [issuesData, membersData, mergeRequestsData] = await Promise.all([
           getProjectIssues(projectId, url, token),
           getProjectMembers(projectId, url, token),
+          getProjectMergeRequests(projectId, url, token),
         ]);
         setIssues(issuesData);
         setProjectMembers(membersData);
+        setMergeRequests(mergeRequestsData);
       } catch (error) {
         console.error(
-          "Échec de la récupération des problèmes ou des membres:",
+          "Échec de la récupération des problèmes, des membres ou des merge requests:",
           error
         );
+        setError("Échec de la récupération des données. Veuillez réessayer.");
         setIssues([]);
         setProjectMembers([]);
+        setMergeRequests([]);
       } finally {
         setIssuesLoading(false);
       }
@@ -238,6 +248,12 @@ const Home = () => {
           </div>
         </Col>
       </Row>
+
+      {error && (
+        <Alert color="danger" className="mb-3">
+          {error}
+        </Alert>
+      )}
 
       {selectedProject && !issuesLoading && (
         <Row className="flex-grow-1 bg-light rounded-3 p-3">

@@ -1,5 +1,5 @@
 // lib/gitlab.ts
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Role } from "./roles";
 
 const createGitlabApi = (gitlabApiUrl: string, gitlabAccessToken: string) => {
@@ -414,12 +414,35 @@ export const getProjectMergeRequests = async (
 ): Promise<MergeRequest[]> => {
   try {
     const gitlabApi = createGitlabApi(gitlabApiUrl, gitlabAccessToken);
-    const response = await gitlabApi.get(`/projects/${projectId}/merge_requests`);
+    console.log(
+      `Fetching merge requests for project ID ${projectId} from ${gitlabApiUrl}`
+    );
+    const response = await gitlabApi.get(
+      `/projects/${projectId}/merge_requests`
+    );
     return response.data;
   } catch (error) {
-    console.error("Erreur lors de la récupération des merge requests:", error);
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError;
+      if (axiosError.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error(`Error response: ${axiosError.response.status}`);
+        console.error(
+          `Error data: ${JSON.stringify(axiosError.response.data)}`
+        );
+      } else if (axiosError.request) {
+        // The request was made but no response was received
+        console.error(`Error request: ${axiosError.request}`);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error(`Error message: ${axiosError.message}`);
+      }
+    } else {
+      // Handle non-Axios errors
+      console.error(`Non-Axios error: ${error}`);
+    }
     throw error;
   }
 };
-
 
