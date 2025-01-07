@@ -11,6 +11,8 @@ import {
   assignMemberToIssue,
   getProjectMergeRequests,
   MergeRequest,
+  getIssueNotes,
+  IssueNote,
 } from "../lib/gitlab";
 import { useRouter } from "next/router";
 import {
@@ -40,6 +42,7 @@ import MembersList from "../components/MembersList";
 import Legend from "../components/Legend";
 import GanttContainer from "../components/GanttContainer";
 import Image from "next/image";
+import NotificationBell from "../components/NotificationBell";
 
 const Home = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -66,6 +69,7 @@ const Home = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
     null
   );
+  const [notifications, setNotifications] = useState<string[]>([]);
 
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
   const toggleReportTooltip = () => setReportTooltipOpen(!reportTooltipOpen);
@@ -119,6 +123,33 @@ const Home = () => {
         setIssues(issuesData);
         setProjectMembers(membersData);
         setMergeRequests(mergeRequestsData);
+
+        // Vérifier les issues sans activité
+        const inactiveIssues = await Promise.all(
+          issuesData.map(async (issue) => {
+            const notes: IssueNote[] = await getIssueNotes(
+              projectId,
+              issue.iid,
+              url,
+              token
+            );
+            return (
+              issue.state === "opened" &&
+              !issue.due_date &&
+              issue.time_stats.time_estimate === 0 &&
+              notes.length === 0
+            );
+          })
+        );
+        const inactiveIssuesCount = inactiveIssues.filter(Boolean).length;
+        console.log("Inactive issues count:", inactiveIssuesCount); // Ajouter un log pour le débogage
+        if (inactiveIssuesCount > 0) {
+          setNotifications([
+            `Il y a ${inactiveIssuesCount} issue(s) en cours sans activité. Veuillez les mettre à jour.`,
+          ]);
+        } else {
+          setNotifications([]);
+        }
       } catch (error) {
         console.error(
           "Échec de la récupération des problèmes, des membres ou des merge requests:",
@@ -214,8 +245,17 @@ const Home = () => {
             {localStorage.getItem("gitlab_url")}
           </span>
         </Col>
-        <Col md={4} className="text-end">
-          <Button color="outline-secondary" size="sm" onClick={handleLogout}>
+        <Col
+          md={4}
+          className="text-end d-flex align-items-center justify-content-end"
+        >
+          <NotificationBell notifications={notifications} />
+          <Button
+            color="outline-secondary"
+            size="sm"
+            onClick={handleLogout}
+            className="ms-2"
+          >
             Déconnexion
           </Button>
         </Col>

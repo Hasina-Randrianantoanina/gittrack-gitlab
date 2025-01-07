@@ -14,6 +14,18 @@ const createGitlabApi = (gitlabApiUrl: string, gitlabAccessToken: string) => {
   });
 };
 
+export interface IssueNote {
+  id: number;
+  body: string;
+  author: {
+    id: number;
+    username: string;
+  };
+  created_at: string;
+  updated_at: string;
+  // Ajoutez d'autres propriétés si nécessaire
+}
+
 export interface Project {
   id: number;
   name: string;
@@ -442,6 +454,23 @@ export const getProjectMergeRequests = async (
       // Handle non-Axios errors
       console.error(`Non-Axios error: ${error}`);
     }
+    throw error;
+  }
+};
+
+// Fonction pour récupérer les commentaires d'une issue
+export const getIssueNotes = async (
+  projectId: number,
+  issueIid: number,
+  gitlabApiUrl: string,
+  gitlabAccessToken: string
+): Promise<IssueNote[]> => {
+  try {
+    const gitlabApi = createGitlabApi(gitlabApiUrl, gitlabAccessToken);
+    const response = await gitlabApi.get(`/projects/${projectId}/issues/${issueIid}/notes`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching notes for issue ${issueIid} in project ${projectId}:`, error);
     throw error;
   }
 };
