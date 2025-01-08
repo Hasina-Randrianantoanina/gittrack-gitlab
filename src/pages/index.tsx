@@ -43,6 +43,7 @@ import Legend from "../components/Legend";
 import GanttContainer from "../components/GanttContainer";
 import Image from "next/image";
 import NotificationBell from "../components/NotificationBell";
+import HelpIcon from "../components/HelpIcon"; // Import the new HelpIcon component
 
 const Home = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -249,6 +250,7 @@ const Home = () => {
           md={4}
           className="text-end d-flex align-items-center justify-content-end"
         >
+          <HelpIcon /> {/* Use the new HelpIcon component */}
           <NotificationBell notifications={notifications} />
           <Button
             color="outline-secondary"
