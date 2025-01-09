@@ -201,121 +201,133 @@ const ReportPage = () => {
     yOffset += 10;
 
     // Add Issues Table
-    const issuesTableHeaders = [
-      "Titre",
-      "État",
-      "Assigné à",
-      "Date de création",
-      "Date d'échéance",
-      "Temps estimé",
-      "Temps passé",
-      "Écart de temps",
-      "% de temps réalisé",
-      "Étiquettes",
-    ];
-    const issuesTableData = issues.map((issue) => [
-      issue.title,
-      issue.state,
-      issue.assignee?.name || "Non assigné",
-      new Date(issue.created_at).toLocaleDateString(),
-      issue.due_date
-        ? new Date(issue.due_date).toLocaleDateString()
-        : "Pas de date",
-      (issue.time_stats.time_estimate / 3600).toFixed(2) + "h",
-      (issue.time_stats.total_time_spent / 3600).toFixed(2) + "h",
-      (
-        (issue.time_stats.time_estimate - issue.time_stats.total_time_spent) /
-        3600
-      ).toFixed(2) + "h",
-      issue.time_stats.time_estimate > 0
-        ? Math.min(
-            100,
-            (issue.time_stats.total_time_spent /
-              issue.time_stats.time_estimate) *
-              100
-          ).toFixed(2) + "%"
-        : "0%",
-      issue.labels.join(", "),
-    ]);
-    autoTable(doc, {
-      head: [issuesTableHeaders],
-      body: issuesTableData,
-      startY: yOffset,
-    });
-    yOffset += 10;
+    if (issues.length > 0) {
+      const issuesTableHeaders = [
+        "Titre",
+        "État",
+        "Assigné à",
+        "Date de création",
+        "Date d'échéance",
+        "Temps estimé",
+        "Temps passé",
+        "Écart de temps",
+        "% de temps réalisé",
+        "Étiquettes",
+      ];
+      const issuesTableData = issues.map((issue) => [
+        issue.title,
+        issue.state,
+        issue.assignee?.name || "Non assigné",
+        new Date(issue.created_at).toLocaleDateString(),
+        issue.due_date
+          ? new Date(issue.due_date).toLocaleDateString()
+          : "Pas de date",
+        (issue.time_stats.time_estimate / 3600).toFixed(2) + "h",
+        (issue.time_stats.total_time_spent / 3600).toFixed(2) + "h",
+        (
+          (issue.time_stats.time_estimate - issue.time_stats.total_time_spent) /
+          3600
+        ).toFixed(2) + "h",
+        issue.time_stats.time_estimate > 0
+          ? Math.min(
+              100,
+              (issue.time_stats.total_time_spent /
+                issue.time_stats.time_estimate) *
+                100
+            ).toFixed(2) + "%"
+          : "0%",
+        issue.labels.join(", "),
+      ]);
+      autoTable(doc, {
+        head: [issuesTableHeaders],
+        body: issuesTableData,
+        startY: yOffset,
+      });
+      yOffset += 10;
+    }
 
     // Add Milestones Table
-    const milestonesTableHeaders = ["Titre", "Date d'échéance", "État"];
-    const milestonesTableData = milestones.map((milestone) => [
-      milestone.title,
-      milestone.due_date
-        ? new Date(milestone.due_date).toLocaleDateString()
-        : "Date inconnue",
-      milestone.state,
-    ]);
-    autoTable(doc, {
-      head: [milestonesTableHeaders],
-      body: milestonesTableData,
-      startY: yOffset,
-    });
-    yOffset += 10;
+    if (milestones.length > 0) {
+      const milestonesTableHeaders = ["Titre", "Date d'échéance", "État"];
+      const milestonesTableData = milestones.map((milestone) => [
+        milestone.title,
+        milestone.due_date
+          ? new Date(milestone.due_date).toLocaleDateString()
+          : "Date inconnue",
+        milestone.state,
+      ]);
+      autoTable(doc, {
+        head: [milestonesTableHeaders],
+        body: milestonesTableData,
+        startY: yOffset,
+      });
+      yOffset += 10;
+    }
 
     // Add Labels List
-    doc.text("Labels des Issues:", 10, yOffset);
-    yOffset += 10;
-    labels.forEach((label) => {
-      doc.text(label.name, 10, yOffset);
+    if (labels.length > 0) {
+      doc.text("Labels des Issues:", 10, yOffset);
       yOffset += 10;
-    });
+      labels.forEach((label) => {
+        doc.text(label.name, 10, yOffset);
+        yOffset += 10;
+      });
+    }
 
     // Add Issues Statistics Table
-    const issuesStatisticsTableHeaders = ["Total", "Ouverts", "Fermés"];
-    const issuesStatisticsTableData = [
-      [
-        issuesStatistics?.total_count || 0,
-        issuesStatistics?.opened_count || 0,
-        issuesStatistics?.closed_count || 0,
-      ],
-    ];
-    autoTable(doc, {
-      head: [issuesStatisticsTableHeaders],
-      body: issuesStatisticsTableData,
-      startY: yOffset,
-    });
-    yOffset += 10;
+    if (issuesStatistics) {
+      const issuesStatisticsTableHeaders = ["Total", "Ouverts", "Fermés"];
+      const issuesStatisticsTableData = [
+        [
+          issuesStatistics?.total_count || 0,
+          issuesStatistics?.opened_count || 0,
+          issuesStatistics?.closed_count || 0,
+        ],
+      ];
+      autoTable(doc, {
+        head: [issuesStatisticsTableHeaders],
+        body: issuesStatisticsTableData,
+        startY: yOffset,
+      });
+      yOffset += 10;
+    }
 
     // Add Assigned Users Table
-    const assignedUsersTableHeaders = [
-      "ID",
-      "Nom",
-      "Nom d'utilisateur",
-      "Email",
-    ];
-    const assignedUsersTableData = Object.values(userDetails).map((user) => [
-      user.id,
-      user.name,
-      user.username,
-      user.email,
-    ]);
-    autoTable(doc, {
-      head: [assignedUsersTableHeaders],
-      body: assignedUsersTableData,
-      startY: yOffset,
-    });
-    yOffset += 10;
+    if (Object.values(userDetails).length > 0) {
+      const assignedUsersTableHeaders = [
+        "ID",
+        "Nom",
+        "Nom d'utilisateur",
+        "Email",
+      ];
+      const assignedUsersTableData = Object.values(userDetails).map((user) => [
+        user.id,
+        user.name,
+        user.username,
+        user.email,
+      ]);
+      autoTable(doc, {
+        head: [assignedUsersTableHeaders],
+        body: assignedUsersTableData,
+        startY: yOffset,
+      });
+      yOffset += 10;
+    }
 
     // Add Activity History Table
-    const activityHistoryTableHeaders = ["Date", "Action", "Auteur"];
-    const activityHistoryTableData = events.map((event) => [
-      new Date(event.created_at).toLocaleDateString(),
-      event.action_name,
-      event.author?.name || "Inconnu",
-    ]);
-    autoTable(doc, {
-      head: [activityHistoryTableHeaders],
-      body: activityHistoryTableData,
-      startY: yOffset,
-    });
+    if (events.length > 0) {
+      const activityHistoryTableHeaders = ["Date", "Action", "Auteur"];
+      const activityHistoryTableData = events.map((event) => [
+        new Date(event.created_at).toLocaleDateString(),
+        event.action_name,
+        event.author?.name || "Inconnu",
+      ]);
+      autoTable(doc, {
+        head: [activityHistoryTableHeaders],
+        body: activityHistoryTableData,
+        startY: yOffset,
+      });
+    }
 
     doc.save("rapport.pdf");
   };
@@ -337,274 +349,326 @@ const ReportPage = () => {
             new Paragraph(`Événements: ${events.length}`),
 
             // Add Issues Table
-            new Paragraph("Issues du Projet"),
-            new Table({
-              rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph("Titre")] }),
-                    new TableCell({ children: [new Paragraph("État")] }),
-                    new TableCell({ children: [new Paragraph("Assigné à")] }),
-                    new TableCell({
-                      children: [new Paragraph("Date de création")],
-                    }),
-                    new TableCell({
-                      children: [new Paragraph("Date d'échéance")],
-                    }),
-                    new TableCell({
-                      children: [new Paragraph("Temps estimé")],
-                    }),
-                    new TableCell({ children: [new Paragraph("Temps passé")] }),
-                    new TableCell({
-                      children: [new Paragraph("Écart de temps")],
-                    }),
-                    new TableCell({
-                      children: [new Paragraph("% de temps réalisé")],
-                    }),
-                    new TableCell({ children: [new Paragraph("Étiquettes")] }),
-                  ],
-                }),
-                ...issues.map(
-                  (issue) =>
-                    new TableRow({
-                      children: [
-                        new TableCell({
-                          children: [new Paragraph(issue.title)],
-                        }),
-                        new TableCell({
-                          children: [new Paragraph(issue.state)],
-                        }),
-                        new TableCell({
-                          children: [
-                            new Paragraph(
-                              issue.assignee?.name || "Non assigné"
-                            ),
-                          ],
-                        }),
-                        new TableCell({
-                          children: [
-                            new Paragraph(
-                              new Date(issue.created_at).toLocaleDateString()
-                            ),
-                          ],
-                        }),
-                        new TableCell({
-                          children: [
-                            new Paragraph(
-                              issue.due_date
-                                ? new Date(issue.due_date).toLocaleDateString()
-                                : "Pas de date"
-                            ),
-                          ],
-                        }),
-                        new TableCell({
-                          children: [
-                            new Paragraph(
-                              (issue.time_stats.time_estimate / 3600).toFixed(
-                                2
-                              ) + "h"
-                            ),
-                          ],
-                        }),
-                        new TableCell({
-                          children: [
-                            new Paragraph(
-                              (
-                                issue.time_stats.total_time_spent / 3600
-                              ).toFixed(2) + "h"
-                            ),
-                          ],
-                        }),
-                        new TableCell({
-                          children: [
-                            new Paragraph(
-                              (
-                                (issue.time_stats.time_estimate -
-                                  issue.time_stats.total_time_spent) /
-                                3600
-                              ).toFixed(2) + "h"
-                            ),
-                          ],
-                        }),
-                        new TableCell({
-                          children: [
-                            new Paragraph(
-                              issue.time_stats.time_estimate > 0
-                                ? Math.min(
-                                    100,
-                                    (issue.time_stats.total_time_spent /
-                                      issue.time_stats.time_estimate) *
-                                      100
-                                  ).toFixed(2) + "%"
-                                : "0%"
-                            ),
-                          ],
-                        }),
-                        new TableCell({
-                          children: [new Paragraph(issue.labels.join(", "))],
-                        }),
-                      ],
-                    })
-                ),
-              ],
-            }),
+            ...(issues.length > 0
+              ? [
+                  new Paragraph("Issues du Projet"),
+                  new Table({
+                    rows: [
+                      new TableRow({
+                        children: [
+                          new TableCell({ children: [new Paragraph("Titre")] }),
+                          new TableCell({ children: [new Paragraph("État")] }),
+                          new TableCell({
+                            children: [new Paragraph("Assigné à")],
+                          }),
+                          new TableCell({
+                            children: [new Paragraph("Date de création")],
+                          }),
+                          new TableCell({
+                            children: [new Paragraph("Date d'échéance")],
+                          }),
+                          new TableCell({
+                            children: [new Paragraph("Temps estimé")],
+                          }),
+                          new TableCell({
+                            children: [new Paragraph("Temps passé")],
+                          }),
+                          new TableCell({
+                            children: [new Paragraph("Écart de temps")],
+                          }),
+                          new TableCell({
+                            children: [new Paragraph("% de temps réalisé")],
+                          }),
+                          new TableCell({
+                            children: [new Paragraph("Étiquettes")],
+                          }),
+                        ],
+                      }),
+                      ...issues.map(
+                        (issue) =>
+                          new TableRow({
+                            children: [
+                              new TableCell({
+                                children: [new Paragraph(issue.title)],
+                              }),
+                              new TableCell({
+                                children: [new Paragraph(issue.state)],
+                              }),
+                              new TableCell({
+                                children: [
+                                  new Paragraph(
+                                    issue.assignee?.name || "Non assigné"
+                                  ),
+                                ],
+                              }),
+                              new TableCell({
+                                children: [
+                                  new Paragraph(
+                                    new Date(
+                                      issue.created_at
+                                    ).toLocaleDateString()
+                                  ),
+                                ],
+                              }),
+                              new TableCell({
+                                children: [
+                                  new Paragraph(
+                                    issue.due_date
+                                      ? new Date(
+                                          issue.due_date
+                                        ).toLocaleDateString()
+                                      : "Pas de date"
+                                  ),
+                                ],
+                              }),
+                              new TableCell({
+                                children: [
+                                  new Paragraph(
+                                    (
+                                      issue.time_stats.time_estimate / 3600
+                                    ).toFixed(2) + "h"
+                                  ),
+                                ],
+                              }),
+                              new TableCell({
+                                children: [
+                                  new Paragraph(
+                                    (
+                                      issue.time_stats.total_time_spent / 3600
+                                    ).toFixed(2) + "h"
+                                  ),
+                                ],
+                              }),
+                              new TableCell({
+                                children: [
+                                  new Paragraph(
+                                    (
+                                      (issue.time_stats.time_estimate -
+                                        issue.time_stats.total_time_spent) /
+                                      3600
+                                    ).toFixed(2) + "h"
+                                  ),
+                                ],
+                              }),
+                              new TableCell({
+                                children: [
+                                  new Paragraph(
+                                    issue.time_stats.time_estimate > 0
+                                      ? Math.min(
+                                          100,
+                                          (issue.time_stats.total_time_spent /
+                                            issue.time_stats.time_estimate) *
+                                            100
+                                        ).toFixed(2) + "%"
+                                      : "0%"
+                                  ),
+                                ],
+                              }),
+                              new TableCell({
+                                children: [
+                                  new Paragraph(issue.labels.join(", ")),
+                                ],
+                              }),
+                            ],
+                          })
+                      ),
+                    ],
+                  }),
+                ]
+              : []),
 
             // Add Milestones Table
-            new Paragraph("Milestones Associés"),
-            new Table({
-              rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph("Titre")] }),
-                    new TableCell({
-                      children: [new Paragraph("Date d'échéance")],
-                    }),
-                    new TableCell({ children: [new Paragraph("État")] }),
-                  ],
-                }),
-                ...milestones.map(
-                  (milestone) =>
-                    new TableRow({
-                      children: [
-                        new TableCell({
-                          children: [new Paragraph(milestone.title)],
-                        }),
-                        new TableCell({
-                          children: [
-                            new Paragraph(
-                              milestone.due_date
-                                ? new Date(
+            ...(milestones.length > 0
+              ? [
+                  new Paragraph("Milestones Associés"),
+                  new Table({
+                    rows: [
+                      new TableRow({
+                        children: [
+                          new TableCell({ children: [new Paragraph("Titre")] }),
+                          new TableCell({
+                            children: [new Paragraph("Date d'échéance")],
+                          }),
+                          new TableCell({ children: [new Paragraph("État")] }),
+                        ],
+                      }),
+                      ...milestones.map(
+                        (milestone) =>
+                          new TableRow({
+                            children: [
+                              new TableCell({
+                                children: [new Paragraph(milestone.title)],
+                              }),
+                              new TableCell({
+                                children: [
+                                  new Paragraph(
                                     milestone.due_date
-                                  ).toLocaleDateString()
-                                : "Date inconnue"
-                            ),
-                          ],
-                        }),
-                        new TableCell({
-                          children: [new Paragraph(milestone.state)],
-                        }),
-                      ],
-                    })
-                ),
-              ],
-            }),
+                                      ? new Date(
+                                          milestone.due_date
+                                        ).toLocaleDateString()
+                                      : "Date inconnue"
+                                  ),
+                                ],
+                              }),
+                              new TableCell({
+                                children: [new Paragraph(milestone.state)],
+                              }),
+                            ],
+                          })
+                      ),
+                    ],
+                  }),
+                ]
+              : []),
 
             // Add Labels List
-            new Paragraph("Labels des Issues"),
-            new Paragraph(labels.map((label) => label.name).join(", ")),
+            ...(labels.length > 0
+              ? [
+                  new Paragraph("Labels des Issues"),
+                  new Paragraph(labels.map((label) => label.name).join(", ")),
+                ]
+              : []),
 
             // Add Issues Statistics Table
-            new Paragraph("Statistiques des Issues"),
-            new Table({
-              rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph("Total")] }),
-                    new TableCell({ children: [new Paragraph("Ouverts")] }),
-                    new TableCell({ children: [new Paragraph("Fermés")] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({
-                      children: [
-                        new Paragraph(
-                          issuesStatistics?.total_count?.toString() || "0"
-                        ),
-                      ],
-                    }),
-                    new TableCell({
-                      children: [
-                        new Paragraph(
-                          issuesStatistics?.opened_count?.toString() || "0"
-                        ),
-                      ],
-                    }),
-                    new TableCell({
-                      children: [
-                        new Paragraph(
-                          issuesStatistics?.closed_count?.toString() || "0"
-                        ),
-                      ],
-                    }),
-                  ],
-                }),
-              ],
-            }),
+            ...(issuesStatistics
+              ? [
+                  new Paragraph("Statistiques des Issues"),
+                  new Table({
+                    rows: [
+                      new TableRow({
+                        children: [
+                          new TableCell({ children: [new Paragraph("Total")] }),
+                          new TableCell({
+                            children: [new Paragraph("Ouverts")],
+                          }),
+                          new TableCell({
+                            children: [new Paragraph("Fermés")],
+                          }),
+                        ],
+                      }),
+                      new TableRow({
+                        children: [
+                          new TableCell({
+                            children: [
+                              new Paragraph(
+                                issuesStatistics?.total_count?.toString() || "0"
+                              ),
+                            ],
+                          }),
+                          new TableCell({
+                            children: [
+                              new Paragraph(
+                                issuesStatistics?.opened_count?.toString() ||
+                                  "0"
+                              ),
+                            ],
+                          }),
+                          new TableCell({
+                            children: [
+                              new Paragraph(
+                                issuesStatistics?.closed_count?.toString() ||
+                                  "0"
+                              ),
+                            ],
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                ]
+              : []),
 
             // Add Assigned Users Table
-            new Paragraph("Détails des Utilisateurs Assignés"),
-            new Table({
-              rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph("ID")] }),
-                    new TableCell({ children: [new Paragraph("Nom")] }),
-                    new TableCell({
-                      children: [new Paragraph("Nom d'utilisateur")],
-                    }),
-                    new TableCell({ children: [new Paragraph("Email")] }),
-                  ],
-                }),
-                ...Object.values(userDetails).map(
-                  (user) =>
-                    new TableRow({
-                      children: [
-                        new TableCell({
-                          children: [new Paragraph(user.id.toString())],
-                        }),
-                        new TableCell({ children: [new Paragraph(user.name)] }),
-                        new TableCell({
-                          children: [new Paragraph(user.username)],
-                        }),
-                        new TableCell({
-                          children: [
-                            user.email
-                              ? new Paragraph(user.email)
-                              : new Paragraph("N/A"),
-                          ],
-                        }),
-                      ],
-                    })
-                ),
-              ],
-            }),
+            ...(Object.values(userDetails).length > 0
+              ? [
+                  new Paragraph("Détails des Utilisateurs Assignés"),
+                  new Table({
+                    rows: [
+                      new TableRow({
+                        children: [
+                          new TableCell({ children: [new Paragraph("ID")] }),
+                          new TableCell({ children: [new Paragraph("Nom")] }),
+                          new TableCell({
+                            children: [new Paragraph("Nom d'utilisateur")],
+                          }),
+                          new TableCell({ children: [new Paragraph("Email")] }),
+                        ],
+                      }),
+                      ...Object.values(userDetails).map(
+                        (user) =>
+                          new TableRow({
+                            children: [
+                              new TableCell({
+                                children: [new Paragraph(user.id.toString())],
+                              }),
+                              new TableCell({
+                                children: [new Paragraph(user.name)],
+                              }),
+                              new TableCell({
+                                children: [new Paragraph(user.username)],
+                              }),
+                              new TableCell({
+                                children: [
+                                  user.email
+                                    ? new Paragraph(user.email)
+                                    : new Paragraph("N/A"),
+                                ],
+                              }),
+                            ],
+                          })
+                      ),
+                    ],
+                  }),
+                ]
+              : []),
 
             // Add Activity History Table
-            new Paragraph("Historique des Activités"),
-            new Table({
-              rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph("Date")] }),
-                    new TableCell({ children: [new Paragraph("Action")] }),
-                    new TableCell({ children: [new Paragraph("Auteur")] }),
-                  ],
-                }),
-                ...events.map(
-                  (event) =>
-                    new TableRow({
-                      children: [
-                        new TableCell({
-                          children: [
-                            new Paragraph(
-                              new Date(event.created_at).toLocaleDateString()
-                            ),
-                          ],
-                        }),
-                        new TableCell({
-                          children: [new Paragraph(event.action_name)],
-                        }),
-                        new TableCell({
-                          children: [
-                            new Paragraph(event.author?.name || "Inconnu"),
-                          ],
-                        }),
-                      ],
-                    })
-                ),
-              ],
-            }),
+            ...(events.length > 0
+              ? [
+                  new Paragraph("Historique des Activités"),
+                  new Table({
+                    rows: [
+                      new TableRow({
+                        children: [
+                          new TableCell({ children: [new Paragraph("Date")] }),
+                          new TableCell({
+                            children: [new Paragraph("Action")],
+                          }),
+                          new TableCell({
+                            children: [new Paragraph("Auteur")],
+                          }),
+                        ],
+                      }),
+                      ...events.map(
+                        (event) =>
+                          new TableRow({
+                            children: [
+                              new TableCell({
+                                children: [
+                                  new Paragraph(
+                                    new Date(
+                                      event.created_at
+                                    ).toLocaleDateString()
+                                  ),
+                                ],
+                              }),
+                              new TableCell({
+                                children: [new Paragraph(event.action_name)],
+                              }),
+                              new TableCell({
+                                children: [
+                                  new Paragraph(
+                                    event.author?.name || "Inconnu"
+                                  ),
+                                ],
+                              }),
+                            ],
+                          })
+                      ),
+                    ],
+                  }),
+                ]
+              : []),
           ],
         },
       ],
