@@ -29,7 +29,15 @@ import AssignedUsers from "../components/AssignedUsers";
 import ActivityHistory from "../components/ActivityHistory";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Document, Packer, Paragraph, Table, TableRow, TableCell } from "docx";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  Table,
+  TableRow,
+  TableCell,
+  TextRun,
+} from "docx";
 import { saveAs } from "file-saver";
 
 const ReportPage = () => {
@@ -356,31 +364,175 @@ const ReportPage = () => {
                     rows: [
                       new TableRow({
                         children: [
-                          new TableCell({ children: [new Paragraph("Titre")] }),
-                          new TableCell({ children: [new Paragraph("État")] }),
                           new TableCell({
-                            children: [new Paragraph("Assigné à")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Titre",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                           new TableCell({
-                            children: [new Paragraph("Date de création")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "État",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                           new TableCell({
-                            children: [new Paragraph("Date d'échéance")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Assigné à",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                           new TableCell({
-                            children: [new Paragraph("Temps estimé")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Date de création",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                           new TableCell({
-                            children: [new Paragraph("Temps passé")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Date d'échéance",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                           new TableCell({
-                            children: [new Paragraph("Écart de temps")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Temps estimé",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                           new TableCell({
-                            children: [new Paragraph("% de temps réalisé")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Temps passé",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                           new TableCell({
-                            children: [new Paragraph("Étiquettes")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Écart de temps",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
+                          }),
+                          new TableCell({
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "% de temps réalisé",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
+                          }),
+                          new TableCell({
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Étiquettes",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                         ],
                       }),
@@ -485,11 +637,57 @@ const ReportPage = () => {
                     rows: [
                       new TableRow({
                         children: [
-                          new TableCell({ children: [new Paragraph("Titre")] }),
                           new TableCell({
-                            children: [new Paragraph("Date d'échéance")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Titre",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
-                          new TableCell({ children: [new Paragraph("État")] }),
+                          new TableCell({
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Date d'échéance",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
+                          }),
+                          new TableCell({
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "État",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
+                          }),
                         ],
                       }),
                       ...milestones.map(
@@ -537,12 +735,56 @@ const ReportPage = () => {
                     rows: [
                       new TableRow({
                         children: [
-                          new TableCell({ children: [new Paragraph("Total")] }),
                           new TableCell({
-                            children: [new Paragraph("Ouverts")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Total",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                           new TableCell({
-                            children: [new Paragraph("Fermés")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Ouverts",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
+                          }),
+                          new TableCell({
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Fermés",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                         ],
                       }),
@@ -586,12 +828,68 @@ const ReportPage = () => {
                     rows: [
                       new TableRow({
                         children: [
-                          new TableCell({ children: [new Paragraph("ID")] }),
-                          new TableCell({ children: [new Paragraph("Nom")] }),
                           new TableCell({
-                            children: [new Paragraph("Nom d'utilisateur")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({ text: "ID", color: "FFFFFF" }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
-                          new TableCell({ children: [new Paragraph("Email")] }),
+                          new TableCell({
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({ text: "Nom", color: "FFFFFF" }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
+                          }),
+                          new TableCell({
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Nom d'utilisateur",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
+                          }),
+                          new TableCell({
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Email",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
+                          }),
                         ],
                       }),
                       ...Object.values(userDetails).map(
@@ -630,12 +928,56 @@ const ReportPage = () => {
                     rows: [
                       new TableRow({
                         children: [
-                          new TableCell({ children: [new Paragraph("Date")] }),
                           new TableCell({
-                            children: [new Paragraph("Action")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Date",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                           new TableCell({
-                            children: [new Paragraph("Auteur")],
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Action",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
+                          }),
+                          new TableCell({
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: "Auteur",
+                                    color: "FFFFFF",
+                                  }),
+                                ],
+                              }),
+                            ],
+                            shading: {
+                              type: "solid",
+                              color: "0a98d6",
+                              fill: "D9D9D9",
+                            },
                           }),
                         ],
                       }),
