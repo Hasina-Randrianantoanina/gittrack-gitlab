@@ -186,7 +186,7 @@ const ReportPage = () => {
     doc.text("Rapport des activités", 10, yOffset);
     yOffset += 10;
 
-    doc.text(`Projet: ${projectDetails?.name}`, 10, yOffset);
+    doc.text(`Projet: ${projectDetails?.name || "N/A"}`, 10, yOffset);
     yOffset += 10;
 
     doc.text(`Issues: ${issues.length}`, 10, yOffset);
@@ -199,7 +199,11 @@ const ReportPage = () => {
     yOffset += 10;
 
     doc.text(
-      `Statistiques des issues: Total: ${issuesStatistics?.total_count}, Ouverts: ${issuesStatistics?.opened_count}, Fermés: ${issuesStatistics?.closed_count}`,
+      `Statistiques des issues: Total: ${
+        issuesStatistics?.total_count || 0
+      }, Ouverts: ${issuesStatistics?.opened_count || 0}, Fermés: ${
+        issuesStatistics?.closed_count || 0
+      }`,
       10,
       yOffset
     );
@@ -223,19 +227,19 @@ const ReportPage = () => {
         "Étiquettes",
       ];
       const issuesTableData = issues.map((issue) => [
-        issue.title,
-        issue.state,
+        issue.title || "N/A",
+        issue.state || "N/A",
         issue.assignee?.name || "Non assigné",
-        new Date(issue.created_at).toLocaleDateString(),
+        new Date(issue.created_at).toLocaleDateString() || "N/A",
         issue.due_date
           ? new Date(issue.due_date).toLocaleDateString()
           : "Pas de date",
-        (issue.time_stats.time_estimate / 3600).toFixed(2) + "h",
-        (issue.time_stats.total_time_spent / 3600).toFixed(2) + "h",
+        (issue.time_stats.time_estimate / 3600).toFixed(2) + "h" || "N/A",
+        (issue.time_stats.total_time_spent / 3600).toFixed(2) + "h" || "N/A",
         (
           (issue.time_stats.time_estimate - issue.time_stats.total_time_spent) /
           3600
-        ).toFixed(2) + "h",
+        ).toFixed(2) + "h" || "N/A",
         issue.time_stats.time_estimate > 0
           ? Math.min(
               100,
@@ -244,7 +248,7 @@ const ReportPage = () => {
                 100
             ).toFixed(2) + "%"
           : "0%",
-        issue.labels.join(", "),
+        issue.labels.join(", ") || "N/A",
       ]);
       autoTable(doc, {
         head: [issuesTableHeaders],
@@ -258,11 +262,11 @@ const ReportPage = () => {
     if (milestones.length > 0) {
       const milestonesTableHeaders = ["Titre", "Date d'échéance", "État"];
       const milestonesTableData = milestones.map((milestone) => [
-        milestone.title,
+        milestone.title || "N/A",
         milestone.due_date
           ? new Date(milestone.due_date).toLocaleDateString()
           : "Date inconnue",
-        milestone.state,
+        milestone.state || "N/A",
       ]);
       autoTable(doc, {
         head: [milestonesTableHeaders],
@@ -277,7 +281,7 @@ const ReportPage = () => {
       doc.text("Labels des Issues:", 10, yOffset);
       yOffset += 10;
       labels.forEach((label) => {
-        doc.text(label.name, 10, yOffset);
+        doc.text(label.name || "N/A", 10, yOffset);
         yOffset += 10;
       });
     }
@@ -309,10 +313,10 @@ const ReportPage = () => {
         "Email",
       ];
       const assignedUsersTableData = Object.values(userDetails).map((user) => [
-        user.id,
-        user.name,
-        user.username,
-        user.email,
+        user.id || "N/A",
+        user.name || "N/A",
+        user.username || "N/A",
+        user.email || "N/A",
       ]);
       autoTable(doc, {
         head: [assignedUsersTableHeaders],
@@ -326,8 +330,8 @@ const ReportPage = () => {
     if (events.length > 0) {
       const activityHistoryTableHeaders = ["Date", "Action", "Auteur"];
       const activityHistoryTableData = events.map((event) => [
-        new Date(event.created_at).toLocaleDateString(),
-        event.action_name,
+        new Date(event.created_at).toLocaleDateString() || "N/A",
+        event.action_name || "N/A",
         event.author?.name || "Inconnu",
       ]);
       autoTable(doc, {
@@ -347,12 +351,16 @@ const ReportPage = () => {
           properties: {},
           children: [
             new Paragraph("Rapport des activités"),
-            new Paragraph(`Projet: ${projectDetails?.name}`),
+            new Paragraph(`Projet: ${projectDetails?.name || "N/A"}`),
             new Paragraph(`Issues: ${issues.length}`),
             new Paragraph(`Milestones: ${milestones.length}`),
             new Paragraph(`Labels: ${labels.length}`),
             new Paragraph(
-              `Statistiques des issues: Total: ${issuesStatistics?.total_count}, Ouverts: ${issuesStatistics?.opened_count}, Fermés: ${issuesStatistics?.closed_count}`
+              `Statistiques des issues: Total: ${
+                issuesStatistics?.total_count || 0
+              }, Ouverts: ${issuesStatistics?.opened_count || 0}, Fermés: ${
+                issuesStatistics?.closed_count || 0
+              }`
             ),
             new Paragraph(`Événements: ${events.length}`),
 
@@ -541,10 +549,10 @@ const ReportPage = () => {
                           new TableRow({
                             children: [
                               new TableCell({
-                                children: [new Paragraph(issue.title)],
+                                children: [new Paragraph(issue.title || "N/A")],
                               }),
                               new TableCell({
-                                children: [new Paragraph(issue.state)],
+                                children: [new Paragraph(issue.state || "N/A")],
                               }),
                               new TableCell({
                                 children: [
@@ -558,7 +566,7 @@ const ReportPage = () => {
                                   new Paragraph(
                                     new Date(
                                       issue.created_at
-                                    ).toLocaleDateString()
+                                    ).toLocaleDateString() || "N/A"
                                   ),
                                 ],
                               }),
@@ -578,7 +586,7 @@ const ReportPage = () => {
                                   new Paragraph(
                                     (
                                       issue.time_stats.time_estimate / 3600
-                                    ).toFixed(2) + "h"
+                                    ).toFixed(2) + "h" || "N/A"
                                   ),
                                 ],
                               }),
@@ -587,7 +595,7 @@ const ReportPage = () => {
                                   new Paragraph(
                                     (
                                       issue.time_stats.total_time_spent / 3600
-                                    ).toFixed(2) + "h"
+                                    ).toFixed(2) + "h" || "N/A"
                                   ),
                                 ],
                               }),
@@ -598,7 +606,7 @@ const ReportPage = () => {
                                       (issue.time_stats.time_estimate -
                                         issue.time_stats.total_time_spent) /
                                       3600
-                                    ).toFixed(2) + "h"
+                                    ).toFixed(2) + "h" || "N/A"
                                   ),
                                 ],
                               }),
@@ -618,7 +626,9 @@ const ReportPage = () => {
                               }),
                               new TableCell({
                                 children: [
-                                  new Paragraph(issue.labels.join(", ")),
+                                  new Paragraph(
+                                    issue.labels.join(", ") || "N/A"
+                                  ),
                                 ],
                               }),
                             ],
@@ -695,7 +705,9 @@ const ReportPage = () => {
                           new TableRow({
                             children: [
                               new TableCell({
-                                children: [new Paragraph(milestone.title)],
+                                children: [
+                                  new Paragraph(milestone.title || "N/A"),
+                                ],
                               }),
                               new TableCell({
                                 children: [
@@ -709,7 +721,9 @@ const ReportPage = () => {
                                 ],
                               }),
                               new TableCell({
-                                children: [new Paragraph(milestone.state)],
+                                children: [
+                                  new Paragraph(milestone.state || "N/A"),
+                                ],
                               }),
                             ],
                           })
@@ -723,7 +737,9 @@ const ReportPage = () => {
             ...(labels.length > 0
               ? [
                   new Paragraph("Labels des Issues"),
-                  new Paragraph(labels.map((label) => label.name).join(", ")),
+                  new Paragraph(
+                    labels.map((label) => label.name || "N/A").join(", ")
+                  ),
                 ]
               : []),
 
@@ -897,13 +913,17 @@ const ReportPage = () => {
                           new TableRow({
                             children: [
                               new TableCell({
-                                children: [new Paragraph(user.id.toString())],
+                                children: [
+                                  new Paragraph(user.id?.toString() || "N/A"),
+                                ],
                               }),
                               new TableCell({
-                                children: [new Paragraph(user.name)],
+                                children: [new Paragraph(user.name || "N/A")],
                               }),
                               new TableCell({
-                                children: [new Paragraph(user.username)],
+                                children: [
+                                  new Paragraph(user.username || "N/A"),
+                                ],
                               }),
                               new TableCell({
                                 children: [
@@ -990,12 +1010,14 @@ const ReportPage = () => {
                                   new Paragraph(
                                     new Date(
                                       event.created_at
-                                    ).toLocaleDateString()
+                                    ).toLocaleDateString() || "N/A"
                                   ),
                                 ],
                               }),
                               new TableCell({
-                                children: [new Paragraph(event.action_name)],
+                                children: [
+                                  new Paragraph(event.action_name || "N/A"),
+                                ],
                               }),
                               new TableCell({
                                 children: [
@@ -1020,6 +1042,7 @@ const ReportPage = () => {
       saveAs(blob, "rapport.docx");
     });
   };
+
 
   if (loading)
     return (
