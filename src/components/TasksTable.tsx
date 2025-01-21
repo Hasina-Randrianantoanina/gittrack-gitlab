@@ -1,8 +1,8 @@
 // components/TasksTable.tsx
 import React from "react";
-import { Table, Button } from "reactstrap";
+import { Table } from "reactstrap";
 import { Issue, Project, ProjectMember } from "../lib/gitlab";
-import * as XLSX from "xlsx";
+// import * as XLSX from "xlsx";
 
 interface TasksTableProps {
   issues: Issue[];
@@ -28,7 +28,7 @@ const TasksTable: React.FC<TasksTableProps> = ({
 
   const filteredIssues = issues.filter(filterIssuesByDateRange);
 
-  const exportToExcel = () => {
+  /* const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(
       filteredIssues.map((issue) => ({
@@ -44,13 +44,13 @@ const TasksTable: React.FC<TasksTableProps> = ({
     );
     XLSX.utils.book_append_sheet(wb, ws, "Tâches");
     XLSX.writeFile(wb, "tâches.xlsx");
-  };
+  }; */
 
   return (
     <div className="table-responsive">
-      <Button color="primary" onClick={exportToExcel} className="mb-3">
+      {/* <Button color="primary" onClick={exportToExcel} className="mb-3">
         Exporter en Excel
-      </Button>
+      </Button> */}
       {filteredIssues.length > 0 ? (
         <Table striped bordered hover>
           <thead>
