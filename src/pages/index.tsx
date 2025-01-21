@@ -1,5 +1,4 @@
-"use client";
-
+// pages/index.tsx
 import React, { useEffect, useState } from "react";
 import {
   getProjects,
@@ -43,9 +42,7 @@ import Legend from "../components/Legend";
 import GanttContainer from "../components/GanttContainer";
 import Image from "next/image";
 import NotificationBell from "../components/NotificationBell";
-import HelpIcon from "../components/HelpIcon"; // Import the new HelpIcon component
-import DateRangeFilter from "@/components/DateRangeFilter";
-import TasksTable from "@/components/TasksTable";
+import HelpIcon from "../components/HelpIcon";
 
 const Home = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -73,8 +70,6 @@ const Home = () => {
     null
   );
   const [notifications, setNotifications] = useState<string[]>([]);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
 
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
   const toggleReportTooltip = () => setReportTooltipOpen(!reportTooltipOpen);
@@ -254,7 +249,7 @@ const Home = () => {
           md={4}
           className="text-end d-flex align-items-center justify-content-end"
         >
-          <HelpIcon /> {/* Use the new HelpIcon component */}
+          <HelpIcon />
           <NotificationBell notifications={notifications} />
           <Button
             color="outline-secondary"
@@ -405,6 +400,15 @@ const Home = () => {
                         onMouseLeave={toggleOverviewTooltip}
                       />
                     </Link>
+                    <Link href="/tasks" passHref>
+                      <Button
+                        color="primary"
+                        size="sm"
+                        style={{ marginLeft: "10px" }}
+                      >
+                        Voir les tâches
+                      </Button>
+                    </Link>
                     {document.getElementById("reportIcon") && (
                       <Tooltip
                         placement="bottom"
@@ -440,24 +444,6 @@ const Home = () => {
                 activeStates={activeStates}
                 handleAssignMember={handleAssignMember}
                 windowDimensions={windowDimensions}
-              />
-            </div>
-            <div className="mt-4">
-              <h2 className="h4 mb-3 text-primary">
-                Tâches assignées par membre
-              </h2>
-              <DateRangeFilter
-                startDate={startDate}
-                endDate={endDate}
-                setStartDate={setStartDate}
-                setEndDate={setEndDate}
-              />
-              <TasksTable
-                issues={issues}
-                projectMembers={projectMembers}
-                projects={projects}
-                startDate={startDate}
-                endDate={endDate}
               />
             </div>
           </Col>
