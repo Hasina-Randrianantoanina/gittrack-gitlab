@@ -44,6 +44,8 @@ import GanttContainer from "../components/GanttContainer";
 import Image from "next/image";
 import NotificationBell from "../components/NotificationBell";
 import HelpIcon from "../components/HelpIcon"; // Import the new HelpIcon component
+import DateRangeFilter from "@/components/DateRangeFilter";
+import TasksTable from "@/components/TasksTable";
 
 const Home = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -71,6 +73,8 @@ const Home = () => {
     null
   );
   const [notifications, setNotifications] = useState<string[]>([]);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
   const toggleReportTooltip = () => setReportTooltipOpen(!reportTooltipOpen);
@@ -436,6 +440,24 @@ const Home = () => {
                 activeStates={activeStates}
                 handleAssignMember={handleAssignMember}
                 windowDimensions={windowDimensions}
+              />
+            </div>
+            <div className="mt-4">
+              <h2 className="h4 mb-3 text-primary">
+                Tâches assignées par membre
+              </h2>
+              <DateRangeFilter
+                startDate={startDate}
+                endDate={endDate}
+                setStartDate={setStartDate}
+                setEndDate={setEndDate}
+              />
+              <TasksTable
+                issues={issues}
+                projectMembers={projectMembers}
+                projects={projects}
+                startDate={startDate}
+                endDate={endDate}
               />
             </div>
           </Col>
