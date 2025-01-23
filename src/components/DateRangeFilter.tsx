@@ -1,12 +1,13 @@
 // components/DateRangeFilter.tsx
 import React from "react";
-import { FormGroup, Label, Input } from "reactstrap";
+import { FormGroup, Label, Input, Button } from "reactstrap";
 
 interface DateRangeFilterProps {
   startDate: string;
   endDate: string;
   setStartDate: (date: string) => void;
   setEndDate: (date: string) => void;
+  clearDates: () => void;
 }
 
 const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
@@ -14,6 +15,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   endDate,
   setStartDate,
   setEndDate,
+  clearDates,
 }) => {
   return (
     <div>
@@ -35,6 +37,9 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
           onChange={(e) => setEndDate(e.target.value)}
         />
       </FormGroup>
+      <Button color="secondary" onClick={clearDates}>
+        Réinitialiser les dates
+      </Button>
     </div>
   );
 };

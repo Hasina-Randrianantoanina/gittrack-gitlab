@@ -21,6 +21,7 @@ import {
 } from "../lib/gitlab";
 import { FaArrowLeft } from "react-icons/fa";
 import { useRouter } from "next/router";
+import DateRangeFilter from "../components/DateRangeFilter";
 
 const OverviewPage: React.FC = () => {
   const router = useRouter();
@@ -29,6 +30,8 @@ const OverviewPage: React.FC = () => {
   const [mergeRequests, setMergeRequests] = useState<MergeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,6 +72,32 @@ const OverviewPage: React.FC = () => {
 
     fetchData();
   }, []);
+
+  const filterIssuesByDateRange = (issue: Issue) => {
+    if (!startDate || !endDate) return true;
+    const issueDate = new Date(issue.created_at);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return issueDate >= start && issueDate <= end;
+  };
+
+  const filterMergeRequestsByDateRange = (mr: MergeRequest) => {
+    if (!startDate || !endDate) return true;
+    const mrDate = new Date(mr.created_at);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return mrDate >= start && mrDate <= end;
+  };
+
+  const filteredIssues = issues.filter(filterIssuesByDateRange);
+  const filteredMergeRequests = mergeRequests.filter(
+    filterMergeRequestsByDateRange
+  );
+
+  const clearDates = () => {
+    setStartDate("");
+    setEndDate("");
+  };
 
   if (loading) {
     return (
@@ -132,10 +161,17 @@ const OverviewPage: React.FC = () => {
         {activeTab === "calendar" && (
           <Row>
             <Col md={12}>
+              <DateRangeFilter
+                startDate={startDate}
+                endDate={endDate}
+                setStartDate={setStartDate}
+                setEndDate={setEndDate}
+                clearDates={clearDates}
+              />
               <h2 className="mb-3">Calendrier des Issues et Merge Requests</h2>
               <CalendarComponent
-                issues={issues}
-                mergeRequests={mergeRequests}
+                issues={filteredIssues}
+                mergeRequests={filteredMergeRequests}
               />
             </Col>
           </Row>
