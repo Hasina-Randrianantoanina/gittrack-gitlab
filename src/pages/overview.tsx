@@ -12,6 +12,7 @@ import {
   FormGroup,
   Label,
   Input,
+  Tooltip,
 } from "reactstrap";
 import Dashboard from "../components/Dashboard";
 import CalendarComponent from "../components/Calendar";
@@ -24,7 +25,9 @@ import {
   MergeRequest,
 } from "../lib/gitlab";
 import { FaArrowLeft } from "react-icons/fa";
+import { FiRefreshCw } from "react-icons/fi";
 import { useRouter } from "next/router";
+
 const OverviewPage: React.FC = () => {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -39,6 +42,18 @@ const OverviewPage: React.FC = () => {
   const [assignees, setAssignees] = useState<{ name: string; id: number }[]>(
     []
   );
+  const [tooltipOpen, setTooltipOpen] = useState({
+    dates: false,
+    filters: false,
+  });
+
+  const toggleTooltip = (type: "dates" | "filters") => {
+    setTooltipOpen((prev) => ({
+      ...prev,
+      [type]: !prev[type],
+    }));
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -52,8 +67,10 @@ const OverviewPage: React.FC = () => {
         console.log("Fetching user info from:", url);
         const projectsData = await getProjects(url, token);
         setProjects(projectsData);
+
         const allIssues: Issue[] = [];
         const allMergeRequests: MergeRequest[] = [];
+
         await Promise.all(
           projectsData.map(async (project) => {
             const [projectIssues, projectMRs] = await Promise.all([
@@ -64,8 +81,10 @@ const OverviewPage: React.FC = () => {
             allMergeRequests.push(...projectMRs);
           })
         );
+
         setIssues(allIssues);
         setMergeRequests(allMergeRequests);
+
         // Extraire les personnes en charge des issues
         const uniqueAssignees = new Map<number, { name: string; id: number }>();
         allIssues.forEach((issue) => {
@@ -83,8 +102,10 @@ const OverviewPage: React.FC = () => {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
+
   const filterIssuesByDateRange = (issue: Issue) => {
     if (!startDate || !endDate) return true;
     const issueDate = new Date(issue.created_at);
@@ -92,6 +113,7 @@ const OverviewPage: React.FC = () => {
     const end = new Date(endDate);
     return issueDate >= start && issueDate <= end;
   };
+
   const filterMergeRequestsByDateRange = (mr: MergeRequest) => {
     if (!startDate || !endDate) return true;
     const mrDate = new Date(mr.created_at);
@@ -99,6 +121,7 @@ const OverviewPage: React.FC = () => {
     const end = new Date(endDate);
     return mrDate >= start && mrDate <= end;
   };
+
   const filteredIssues = issues
     .filter(filterIssuesByDateRange)
     .filter(
@@ -109,21 +132,25 @@ const OverviewPage: React.FC = () => {
         !assigneeFilter ||
         issue.assignees.some((assignee) => assignee.name === assigneeFilter)
     );
+
   const filteredMergeRequests = mergeRequests
     .filter(filterMergeRequestsByDateRange)
     .filter(
       (mr) => !projectFilter || mr.project_id.toString() === projectFilter
     );
+
   const clearDates = () => {
     setStartDate("");
     setEndDate("");
   };
+
   const clearFilters = () => {
     setStartDate("");
     setEndDate("");
     setProjectFilter("");
     setAssigneeFilter("");
   };
+
   if (loading) {
     return (
       <div
@@ -134,6 +161,7 @@ const OverviewPage: React.FC = () => {
       </div>
     );
   }
+
   return (
     <>
       <style jsx global>{`
@@ -149,6 +177,19 @@ const OverviewPage: React.FC = () => {
         }
         .filter-group > :last-child {
           margin-right: 0;
+        }
+        .refresh-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: 2px solid #f8f4e3;
+          transition: all 0.3s ease;
+        }
+        .refresh-button:hover {
+          background-color: #f8f4e3;
         }
       `}</style>
       <Container fluid className="py-4">
@@ -219,9 +260,24 @@ const OverviewPage: React.FC = () => {
                       onChange={(e) => setEndDate(e.target.value)}
                     />
                   </FormGroup>
-                  <Button color="secondary" onClick={clearDates}>
-                    Réinitialiser les dates
+                  <Button
+                    id="refreshDatesButton"
+                    color="link"
+                    className="p-0 ms-2 refresh-button"
+                    onClick={clearDates}
+                    onMouseEnter={() => toggleTooltip("dates")}
+                    onMouseLeave={() => toggleTooltip("dates")}
+                  >
+                    <FiRefreshCw size={18} color="#6c757d" />
                   </Button>
+                  <Tooltip
+                    placement="bottom"
+                    isOpen={tooltipOpen.dates}
+                    target="refreshDatesButton"
+                    toggle={() => toggleTooltip("dates")}
+                  >
+                    Réinitialiser les dates
+                  </Tooltip>
                 </Col>
               </Row>
               <Row className="mb-3 align-items-center">
@@ -262,9 +318,24 @@ const OverviewPage: React.FC = () => {
                       ))}
                     </Input>
                   </FormGroup>
-                  <Button color="secondary" onClick={clearFilters}>
-                    Réinitialiser les filtres
+                  <Button
+                    id="refreshFiltersButton"
+                    color="link"
+                    className="p-0 ms-2 refresh-button"
+                    onClick={clearFilters}
+                    onMouseEnter={() => toggleTooltip("filters")}
+                    onMouseLeave={() => toggleTooltip("filters")}
+                  >
+                    <FiRefreshCw size={18} color="#6c757d" />
                   </Button>
+                  <Tooltip
+                    placement="bottom"
+                    isOpen={tooltipOpen.filters}
+                    target="refreshFiltersButton"
+                    toggle={() => toggleTooltip("filters")}
+                  >
+                    Réinitialiser les filtres
+                  </Tooltip>
                 </Col>
               </Row>
               <h2 className="mb-3">Calendrier des Issues et Merge Requests</h2>
@@ -281,4 +352,5 @@ const OverviewPage: React.FC = () => {
     </>
   );
 };
+
 export default OverviewPage;
