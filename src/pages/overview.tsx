@@ -25,8 +25,6 @@ import {
 } from "../lib/gitlab";
 import { FaArrowLeft } from "react-icons/fa";
 import { useRouter } from "next/router";
-import DateRangeFilter from "../components/DateRangeFilter";
-
 const OverviewPage: React.FC = () => {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -41,7 +39,6 @@ const OverviewPage: React.FC = () => {
   const [assignees, setAssignees] = useState<{ name: string; id: number }[]>(
     []
   );
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -55,10 +52,8 @@ const OverviewPage: React.FC = () => {
         console.log("Fetching user info from:", url);
         const projectsData = await getProjects(url, token);
         setProjects(projectsData);
-
         const allIssues: Issue[] = [];
         const allMergeRequests: MergeRequest[] = [];
-
         await Promise.all(
           projectsData.map(async (project) => {
             const [projectIssues, projectMRs] = await Promise.all([
@@ -69,10 +64,8 @@ const OverviewPage: React.FC = () => {
             allMergeRequests.push(...projectMRs);
           })
         );
-
         setIssues(allIssues);
         setMergeRequests(allMergeRequests);
-
         // Extraire les personnes en charge des issues
         const uniqueAssignees = new Map<number, { name: string; id: number }>();
         allIssues.forEach((issue) => {
@@ -90,10 +83,8 @@ const OverviewPage: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
-
   const filterIssuesByDateRange = (issue: Issue) => {
     if (!startDate || !endDate) return true;
     const issueDate = new Date(issue.created_at);
@@ -101,7 +92,6 @@ const OverviewPage: React.FC = () => {
     const end = new Date(endDate);
     return issueDate >= start && issueDate <= end;
   };
-
   const filterMergeRequestsByDateRange = (mr: MergeRequest) => {
     if (!startDate || !endDate) return true;
     const mrDate = new Date(mr.created_at);
@@ -109,7 +99,6 @@ const OverviewPage: React.FC = () => {
     const end = new Date(endDate);
     return mrDate >= start && mrDate <= end;
   };
-
   const filteredIssues = issues
     .filter(filterIssuesByDateRange)
     .filter(
@@ -120,18 +109,21 @@ const OverviewPage: React.FC = () => {
         !assigneeFilter ||
         issue.assignees.some((assignee) => assignee.name === assigneeFilter)
     );
-
   const filteredMergeRequests = mergeRequests
     .filter(filterMergeRequestsByDateRange)
     .filter(
       (mr) => !projectFilter || mr.project_id.toString() === projectFilter
     );
-
   const clearDates = () => {
     setStartDate("");
     setEndDate("");
   };
-
+  const clearFilters = () => {
+    setStartDate("");
+    setEndDate("");
+    setProjectFilter("");
+    setAssigneeFilter("");
+  };
   if (loading) {
     return (
       <div
@@ -142,12 +134,21 @@ const OverviewPage: React.FC = () => {
       </div>
     );
   }
-
   return (
     <>
       <style jsx global>{`
         .cursor-pointer {
           cursor: pointer !important;
+        }
+        .filter-group {
+          display: flex;
+          align-items: center;
+        }
+        .filter-group > * {
+          margin-right: 8px;
+        }
+        .filter-group > :last-child {
+          margin-right: 0;
         }
       `}</style>
       <Container fluid className="py-4">
@@ -194,47 +195,78 @@ const OverviewPage: React.FC = () => {
         {activeTab === "calendar" && (
           <Row>
             <Col md={12}>
-              <DateRangeFilter
-                startDate={startDate}
-                endDate={endDate}
-                setStartDate={setStartDate}
-                setEndDate={setEndDate}
-                clearDates={clearDates}
-              />
-              <FormGroup>
-                <Label for="projectFilter">Filtrer par projet</Label>
-                <Input
-                  type="select"
-                  id="projectFilter"
-                  value={projectFilter}
-                  onChange={(e) => setProjectFilter(e.target.value)}
-                >
-                  <option value="">Tous les projets</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id.toString()}>
-                      {project.name}
-                    </option>
-                  ))}
-                </Input>
-              </FormGroup>
-              <FormGroup>
-                <Label for="assigneeFilter">
-                  Filtrer par personne en charge
-                </Label>
-                <Input
-                  type="select"
-                  id="assigneeFilter"
-                  value={assigneeFilter}
-                  onChange={(e) => setAssigneeFilter(e.target.value)}
-                >
-                  <option value="">Toutes les personnes</option>
-                  {assignees.map((assignee) => (
-                    <option key={assignee.id} value={assignee.name}>
-                      {assignee.name}
-                    </option>
-                  ))}
-                </Input>
-              </FormGroup>
+              <Row className="mb-3 align-items-center">
+                <Col md={12} className="d-flex filter-group">
+                  <FormGroup className="w-100 me-2">
+                    <Label for="startDate" className="me-2">
+                      Date de début
+                    </Label>
+                    <Input
+                      type="date"
+                      id="startDate"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </FormGroup>
+                  <FormGroup className="w-100 me-2">
+                    <Label for="endDate" className="me-2">
+                      Date de fin
+                    </Label>
+                    <Input
+                      type="date"
+                      id="endDate"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </FormGroup>
+                  <Button color="secondary" onClick={clearDates}>
+                    Réinitialiser les dates
+                  </Button>
+                </Col>
+              </Row>
+              <Row className="mb-3 align-items-center">
+                <Col md={12} className="d-flex filter-group">
+                  <FormGroup className="w-100 me-2">
+                    <Label for="projectFilter" className="me-2">
+                      Filtrer par projet
+                    </Label>
+                    <Input
+                      type="select"
+                      id="projectFilter"
+                      value={projectFilter}
+                      onChange={(e) => setProjectFilter(e.target.value)}
+                    >
+                      <option value="">Tous les projets</option>
+                      {projects.map((project) => (
+                        <option key={project.id} value={project.id.toString()}>
+                          {project.name}
+                        </option>
+                      ))}
+                    </Input>
+                  </FormGroup>
+                  <FormGroup className="w-100 me-2">
+                    <Label for="assigneeFilter" className="me-2">
+                      Filtrer par personne en charge
+                    </Label>
+                    <Input
+                      type="select"
+                      id="assigneeFilter"
+                      value={assigneeFilter}
+                      onChange={(e) => setAssigneeFilter(e.target.value)}
+                    >
+                      <option value="">Toutes les personnes</option>
+                      {assignees.map((assignee) => (
+                        <option key={assignee.id} value={assignee.name}>
+                          {assignee.name}
+                        </option>
+                      ))}
+                    </Input>
+                  </FormGroup>
+                  <Button color="secondary" onClick={clearFilters}>
+                    Réinitialiser les filtres
+                  </Button>
+                </Col>
+              </Row>
               <h2 className="mb-3">Calendrier des Issues et Merge Requests</h2>
               <CalendarComponent
                 issues={filteredIssues}
@@ -249,5 +281,4 @@ const OverviewPage: React.FC = () => {
     </>
   );
 };
-
 export default OverviewPage;
