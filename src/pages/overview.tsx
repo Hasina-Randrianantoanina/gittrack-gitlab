@@ -1,3 +1,4 @@
+// pages/overview.tsx
 import React, { useEffect, useState } from "react";
 import {
   Container,
@@ -8,6 +9,9 @@ import {
   NavLink,
   Spinner,
   Button,
+  FormGroup,
+  Label,
+  Input,
 } from "reactstrap";
 import Dashboard from "../components/Dashboard";
 import CalendarComponent from "../components/Calendar";
@@ -32,6 +36,11 @@ const OverviewPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
+  const [assigneeFilter, setAssigneeFilter] = useState("");
+  const [assignees, setAssignees] = useState<{ name: string; id: number }[]>(
+    []
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,6 +72,18 @@ const OverviewPage: React.FC = () => {
 
         setIssues(allIssues);
         setMergeRequests(allMergeRequests);
+
+        // Extraire les personnes en charge des issues
+        const uniqueAssignees = new Map<number, { name: string; id: number }>();
+        allIssues.forEach((issue) => {
+          issue.assignees.forEach((assignee) => {
+            uniqueAssignees.set(assignee.id, {
+              name: assignee.name,
+              id: assignee.id,
+            });
+          });
+        });
+        setAssignees(Array.from(uniqueAssignees.values()));
       } catch (error) {
         console.error("Erreur lors de la récupération des données:", error);
       } finally {
@@ -89,10 +110,22 @@ const OverviewPage: React.FC = () => {
     return mrDate >= start && mrDate <= end;
   };
 
-  const filteredIssues = issues.filter(filterIssuesByDateRange);
-  const filteredMergeRequests = mergeRequests.filter(
-    filterMergeRequestsByDateRange
-  );
+  const filteredIssues = issues
+    .filter(filterIssuesByDateRange)
+    .filter(
+      (issue) => !projectFilter || issue.project_id.toString() === projectFilter
+    )
+    .filter(
+      (issue) =>
+        !assigneeFilter ||
+        issue.assignees.some((assignee) => assignee.name === assigneeFilter)
+    );
+
+  const filteredMergeRequests = mergeRequests
+    .filter(filterMergeRequestsByDateRange)
+    .filter(
+      (mr) => !projectFilter || mr.project_id.toString() === projectFilter
+    );
 
   const clearDates = () => {
     setStartDate("");
@@ -168,10 +201,46 @@ const OverviewPage: React.FC = () => {
                 setEndDate={setEndDate}
                 clearDates={clearDates}
               />
+              <FormGroup>
+                <Label for="projectFilter">Filtrer par projet</Label>
+                <Input
+                  type="select"
+                  id="projectFilter"
+                  value={projectFilter}
+                  onChange={(e) => setProjectFilter(e.target.value)}
+                >
+                  <option value="">Tous les projets</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id.toString()}>
+                      {project.name}
+                    </option>
+                  ))}
+                </Input>
+              </FormGroup>
+              <FormGroup>
+                <Label for="assigneeFilter">
+                  Filtrer par personne en charge
+                </Label>
+                <Input
+                  type="select"
+                  id="assigneeFilter"
+                  value={assigneeFilter}
+                  onChange={(e) => setAssigneeFilter(e.target.value)}
+                >
+                  <option value="">Toutes les personnes</option>
+                  {assignees.map((assignee) => (
+                    <option key={assignee.id} value={assignee.name}>
+                      {assignee.name}
+                    </option>
+                  ))}
+                </Input>
+              </FormGroup>
               <h2 className="mb-3">Calendrier des Issues et Merge Requests</h2>
               <CalendarComponent
                 issues={filteredIssues}
                 mergeRequests={filteredMergeRequests}
+                projectFilter={projectFilter}
+                assigneeFilter={assigneeFilter}
               />
             </Col>
           </Row>

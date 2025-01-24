@@ -1,3 +1,4 @@
+// components/Calendar.tsx
 import React from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
@@ -20,6 +21,8 @@ interface CalendarEvent {
 interface CalendarProps {
   issues: Issue[];
   mergeRequests: MergeRequest[];
+  projectFilter: string;
+  assigneeFilter: string;
 }
 
 const messages = {
@@ -41,30 +44,46 @@ const messages = {
 const CalendarComponent: React.FC<CalendarProps> = ({
   issues,
   mergeRequests,
+  projectFilter,
+  assigneeFilter,
 }) => {
   const events: CalendarEvent[] = [
-    ...issues.map((issue) => ({
-      id: issue.id,
-      title: `Issue : ${issue.title}`,
-      start: new Date(issue.created_at),
-      end: issue.due_date
-        ? new Date(issue.due_date)
-        : new Date(issue.created_at),
-      assignee: issue.assignees.length
-        ? {
-            name: issue.assignees[0].name,
-            avatar_url: issue.assignees[0].avatar_url,
-          }
-        : undefined,
-    })),
-    ...mergeRequests.map((mr) => ({
-      id: mr.id,
-      title: `Fusion : ${mr.title}`,
-      start: new Date(mr.created_at),
-      end: mr.merge_when_pipeline_succeeds
-        ? new Date(mr.created_at)
-        : new Date(),
-    })),
+    ...issues
+      .filter(
+        (issue) =>
+          !projectFilter || issue.project_id.toString() === projectFilter
+      )
+      .filter(
+        (issue) =>
+          !assigneeFilter ||
+          issue.assignees.some((assignee) => assignee.name === assigneeFilter)
+      )
+      .map((issue) => ({
+        id: issue.id,
+        title: `Issue : ${issue.title}`,
+        start: new Date(issue.created_at),
+        end: issue.due_date
+          ? new Date(issue.due_date)
+          : new Date(issue.created_at),
+        assignee: issue.assignees.length
+          ? {
+              name: issue.assignees[0].name,
+              avatar_url: issue.assignees[0].avatar_url,
+            }
+          : undefined,
+      })),
+    ...mergeRequests
+      .filter(
+        (mr) => !projectFilter || mr.project_id.toString() === projectFilter
+      )
+      .map((mr) => ({
+        id: mr.id,
+        title: `Fusion : ${mr.title}`,
+        start: new Date(mr.created_at),
+        end: mr.merge_when_pipeline_succeeds
+          ? new Date(mr.created_at)
+          : new Date(),
+      })),
   ];
 
   return (
