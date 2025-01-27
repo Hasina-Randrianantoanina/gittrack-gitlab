@@ -180,8 +180,9 @@ const TasksPage = () => {
             startDate={startDate}
             endDate={endDate}
             setStartDate={setStartDate}
-            setEndDate={setEndDate}
-          />
+            setEndDate={setEndDate} clearDates={function (): void {
+              throw new Error("Function not implemented.");
+            } }          />
           <TasksTable
             issues={issues}
             projectMembers={projectMembers}
