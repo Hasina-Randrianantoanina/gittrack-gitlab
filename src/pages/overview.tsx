@@ -20,13 +20,16 @@ import {
   getProjects,
   getProjectIssues,
   getProjectMergeRequests,
+  getProjectMembers,
   Project,
   Issue,
   MergeRequest,
+  ProjectMember,
 } from "../lib/gitlab";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiRefreshCw } from "react-icons/fi";
 import { useRouter } from "next/router";
+import TasksOverview from "@/components/TasksOverview";
 
 const OverviewPage: React.FC = () => {
   const router = useRouter();
@@ -42,6 +45,7 @@ const OverviewPage: React.FC = () => {
   const [assignees, setAssignees] = useState<{ name: string; id: number }[]>(
     []
   );
+  const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
   const [tooltipOpen, setTooltipOpen] = useState({
     dates: false,
     filters: false,
@@ -70,20 +74,25 @@ const OverviewPage: React.FC = () => {
 
         const allIssues: Issue[] = [];
         const allMergeRequests: MergeRequest[] = [];
+        const allProjectMembers: ProjectMember[] = [];
 
         await Promise.all(
           projectsData.map(async (project) => {
-            const [projectIssues, projectMRs] = await Promise.all([
-              getProjectIssues(project.id, url, token),
-              getProjectMergeRequests(project.id, url, token),
-            ]);
+            const [projectIssues, projectMRs, projectMembers] =
+              await Promise.all([
+                getProjectIssues(project.id, url, token),
+                getProjectMergeRequests(project.id, url, token),
+                getProjectMembers(project.id, url, token),
+              ]);
             allIssues.push(...projectIssues);
             allMergeRequests.push(...projectMRs);
+            allProjectMembers.push(...projectMembers);
           })
         );
 
         setIssues(allIssues);
         setMergeRequests(allMergeRequests);
+        setProjectMembers(allProjectMembers);
 
         // Extraire les personnes en charge des issues
         const uniqueAssignees = new Map<number, { name: string; id: number }>();
@@ -96,6 +105,10 @@ const OverviewPage: React.FC = () => {
           });
         });
         setAssignees(Array.from(uniqueAssignees.values()));
+
+        console.log("Fetched Issues:", allIssues); // Ajout de log
+        console.log("Fetched Merge Requests:", allMergeRequests); // Ajout de log
+        console.log("Fetched Project Members:", allProjectMembers); // Ajout de log
       } catch (error) {
         console.error("Erreur lors de la récupération des données:", error);
       } finally {
@@ -225,6 +238,16 @@ const OverviewPage: React.FC = () => {
               Calendrier
             </NavLink>
           </NavItem>
+          <NavItem>
+            <NavLink
+              className={`${
+                activeTab === "tasks" ? "active" : ""
+              } cursor-pointer`}
+              onClick={() => setActiveTab("tasks")}
+            >
+              Tâches
+            </NavLink>
+          </NavItem>
         </Nav>
         {activeTab === "dashboard" && (
           <Row>
@@ -344,6 +367,19 @@ const OverviewPage: React.FC = () => {
                 mergeRequests={filteredMergeRequests}
                 projectFilter={projectFilter}
                 assigneeFilter={assigneeFilter}
+              />
+            </Col>
+          </Row>
+        )}
+        {activeTab === "tasks" && (
+          <Row>
+            <Col md={12}>
+              <TasksOverview
+                issues={issues}
+                projects={projects}
+                projectMembers={projectMembers}
+                startDate={startDate}
+                endDate={endDate}
               />
             </Col>
           </Row>
