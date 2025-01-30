@@ -400,15 +400,6 @@ const Home = () => {
                         onMouseLeave={toggleOverviewTooltip}
                       />
                     </Link>
-                    <Link href="/tasks" passHref>
-                      <Button
-                        color="primary"
-                        size="sm"
-                        style={{ marginLeft: "10px" }}
-                      >
-                        Voir les tâches
-                      </Button>
-                    </Link>
                     {document.getElementById("reportIcon") && (
                       <Tooltip
                         placement="bottom"
