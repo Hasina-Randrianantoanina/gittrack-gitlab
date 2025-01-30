@@ -30,6 +30,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import { FiRefreshCw } from "react-icons/fi";
 import { useRouter } from "next/router";
 import TasksOverview from "@/components/TasksOverview";
+import * as XLSX from "xlsx";
 
 const OverviewPage: React.FC = () => {
   const router = useRouter();
@@ -162,6 +163,28 @@ const OverviewPage: React.FC = () => {
     setEndDate("");
     setProjectFilter("");
     setAssigneeFilter("");
+  };
+
+  const exportToExcel = () => {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(
+      filteredIssues.map((issue) => ({
+        Projet:
+          projects.find((p) => p.id === issue.project_id)?.name ||
+          "Projet inconnu",
+        Tâche: issue.title,
+        "Date de création": new Date(issue.created_at).toLocaleDateString(),
+        "Date d'échéance": issue.due_date
+          ? new Date(issue.due_date).toLocaleDateString()
+          : "Pas de date",
+        État: issue.state,
+        "Assigné à": issue.assignees
+          .map((assignee) => assignee.name)
+          .join(", "),
+      }))
+    );
+    XLSX.utils.book_append_sheet(wb, ws, "Tâches");
+    XLSX.writeFile(wb, "tâches.xlsx");
   };
 
   if (loading) {
@@ -368,6 +391,9 @@ const OverviewPage: React.FC = () => {
                 projectFilter={projectFilter}
                 assigneeFilter={assigneeFilter}
               />
+              <Button color="primary" onClick={exportToExcel} className="mt-3">
+                Exporter en Excel
+              </Button>
             </Col>
           </Row>
         )}
@@ -375,7 +401,7 @@ const OverviewPage: React.FC = () => {
           <Row>
             <Col md={12}>
               <TasksOverview
-                issues={issues}
+                issues={filteredIssues}
                 projects={projects}
                 projectMembers={projectMembers}
                 startDate={startDate}
